@@ -1,1 +1,407 @@
 
+steps:
+  - name: 1. Repozitoriydan kodlarni olish
+    uses: actions/checkout@v4
+
+  - name: 2. Java JDK 17 o'rnatish
+    uses: actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '17'
+
+  - name: 3. Android SDK va Gradle sozlash
+    uses: android-actions/setup-android@v3
+
+  - name: 4. Gradle 8.5 o'rnatish
+    uses: gradle/actions/setup-gradle@v3
+    with:
+      gradle-version: '8.5'
+
+  - name: 5. Loyiha strukturasini avtomatik tayyorlash va APK yig'ish
+    run: |
+      mkdir -p app/src/main/java/com/alharitm/uzbekfkeyboard
+      mkdir -p app/src/main/res/xml
+
+      # Kotlin faylni to'liq importlari bilan yaratish
+      cat << 'EOF' > app/src/main/java/com/alharitm/uzbekfkeyboard/UzbekFKeyboardService.kt
+      package com.alharitm.uzbekfkeyboard
+
+      import android.app.Activity
+      import android.content.Intent
+      import android.graphics.Color
+      import android.graphics.Typeface
+      import android.graphics.drawable.GradientDrawable
+      import android.inputmethodservice.InputMethodService
+      import android.os.Bundle
+      import android.provider.Settings
+      import android.util.TypedValue
+      import android.view.Gravity
+      import android.view.HapticFeedbackConstants
+      import android.view.KeyEvent
+      import android.view.View
+      import android.view.ViewGroup
+      import android.view.inputmethod.InputMethodManager
+      import android.widget.Button
+      import android.widget.LinearLayout
+
+      class SetupActivity : Activity() {
+          override fun onCreate(savedInstanceState: Bundle?) {
+              super.onCreate(savedInstanceState)
+
+              val root = LinearLayout(this).apply {
+                  orientation = LinearLayout.VERTICAL
+                  setBackgroundColor(Color.parseColor("#06080F"))
+                  gravity = Gravity.CENTER_HORIZONTAL
+                  val pad = (24 * resources.displayMetrics.density).toInt()
+                  setPadding(pad, pad * 2, pad, pad)
+              }
+
+              val title = Button(this).apply {
+                  text = "OʻZBEK F-KLAVIATURASI (v1.0)\nAlharitm.com"
+                  isAllCaps = false
+                  setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                  typeface = Typeface.DEFAULT_BOLD
+                  setTextColor(Color.parseColor("#38BDF8"))
+                  setBackgroundColor(Color.TRANSPARENT)
+              }
+
+              val step1Btn = Button(this).apply {
+                  text = "1-QADAM: Tizim sozlamalaridan yoqish ⚙️"
+                  isAllCaps = false
+                  setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                  setTextColor(Color.WHITE)
+                  setBackgroundColor(Color.parseColor("#0284C7"))
+                  setOnClickListener {
+                      startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
+                  }
+              }
+
+              val step2Btn = Button(this).apply {
+                  text = "2-QADAM: Oʻzbek F klaviaturasini tanlash ⌨️"
+                  isAllCaps = false
+                  setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                  setTextColor(Color.WHITE)
+                  setBackgroundColor(Color.parseColor("#059669"))
+                  setOnClickListener {
+                      val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                      imm.showInputMethodPicker()
+                  }
+              }
+
+              val lp = LinearLayout.LayoutParams(
+                  ViewGroup.LayoutParams.MATCH_PARENT,
+                  ViewGroup.LayoutParams.WRAP_CONTENT
+              ).apply { bottomMargin = (16 * resources.displayMetrics.density).toInt() }
+
+              root.addView(title, lp)
+              root.addView(step1Btn, lp)
+              root.addView(step2Btn, lp)
+              setContentView(root)
+          }
+      }
+
+      class UzbekFKeyboardService : InputMethodService() {
+
+          private var isShifted = false
+          private var isSymbolsMode = false
+          private var lastSpaceTime: Long = 0
+          private lateinit var rootLayout: LinearLayout
+
+          private val letterRows = listOf(
+              listOf("f", "g", "ğ", "o", "q", "d", "r", "n", "h", "p"),
+              listOf("u", "i", "e", "a", "ö", "t", "k", "l", "m", "s"),
+              listOf("j", "x", "v", "ç", "z", "ş", "b", "y", "ʼ", ".")
+          )
+
+          private val longPressMap = mapOf(
+              "f" to "1", "g" to "2", "ğ" to "3", "o" to "4", "q" to "5",
+              "d" to "6", "r" to "7", "n" to "8", "h" to "9", "p" to "0",
+              "ç" to "c", "v" to "w", "ʼ" to "\"", "." to "?"
+          )
+
+          private val symbolRows = listOf(
+              listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
+              listOf("@", "#", "$", "%", "&", "-", "+", "(", ")", "/"),
+              listOf("*", "\"", "'", ":", ";", "!", "?", "c", "w", ",")
+          )
+
+          override fun onCreateInputView(): View {
+              rootLayout = LinearLayout(this).apply {
+                  orientation = LinearLayout.VERTICAL
+                  setBackgroundColor(Color.parseColor("#0F172A"))
+                  val pad = dpToPx(6)
+                  setPadding(pad, dpToPx(8), pad, dpToPx(14))
+                  layoutParams = ViewGroup.LayoutParams(
+                      ViewGroup.LayoutParams.MATCH_PARENT,
+                      ViewGroup.LayoutParams.WRAP_CONTENT
+                  )
+              }
+              renderKeyboard()
+              return rootLayout
+          }
+
+          private fun renderKeyboard() {
+              rootLayout.removeAllViews()
+              val activeRows = if (isSymbolsMode) symbolRows else letterRows
+
+              for (row in activeRows) {
+                  val rowLayout = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      weightSum = 10f
+                      layoutParams = LinearLayout.LayoutParams(
+                          LinearLayout.LayoutParams.MATCH_PARENT,
+                          dpToPx(48)
+                      ).apply { bottomMargin = dpToPx(6) }
+                  }
+
+                  for (keyChar in row) {
+                      val displayChar = if (!isSymbolsMode && isShifted) {
+                          if (keyChar == ".") "," else keyChar.uppercase()
+                      } else {
+                          keyChar
+                      }
+
+                      val btn = createKeyButton(displayChar, 1f, isSpecial = false)
+                      btn.setOnClickListener { view ->
+                          view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                          commitText(displayChar)
+                          if (isShifted) {
+                              isShifted = false
+                              renderKeyboard()
+                          }
+                      }
+
+                      val altChar = longPressMap[keyChar]
+                      if (!isSymbolsMode && altChar != null) {
+                          btn.setOnLongClickListener { view ->
+                              view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                              val outAlt = if (isShifted) altChar.uppercase() else altChar
+                              commitText(outAlt)
+                              true
+                          }
+                      }
+
+                      rowLayout.addView(btn)
+                  }
+                  rootLayout.addView(rowLayout)
+              }
+
+              val bottomRow = LinearLayout(this).apply {
+                  orientation = LinearLayout.HORIZONTAL
+                  weightSum = 10f
+                  layoutParams = LinearLayout.LayoutParams(
+                      LinearLayout.LayoutParams.MATCH_PARENT,
+                      dpToPx(48)
+                  )
+              }
+
+              val shiftBtn = createKeyButton(if (isShifted) "⬆" else "⇧", 1.5f, isSpecial = true)
+              shiftBtn.setOnClickListener {
+                  it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                  isShifted = !isShifted
+                  renderKeyboard()
+              }
+
+              val symBtn = createKeyButton(if (isSymbolsMode) "ABC" else "?123", 1.5f, isSpecial = true)
+              symBtn.setOnClickListener {
+                  it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                  isSymbolsMode = !isSymbolsMode
+                  renderKeyboard()
+              }
+
+              val spaceBtn = createKeyButton("Oʻzbek F", 4.0f, isSpecial = false)
+              spaceBtn.setOnClickListener {
+                  it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                  val now = System.currentTimeMillis()
+                  if (now - lastSpaceTime < 320L) {
+                      currentInputConnection?.deleteSurroundingText(1, 0)
+                      commitText(". ")
+                      isShifted = true
+                      renderKeyboard()
+                  } else {
+                      commitText(" ")
+                  }
+                  lastSpaceTime = now
+              }
+
+              val delBtn = createKeyButton("⌫", 1.5f, isSpecial = true)
+              delBtn.setOnClickListener {
+                  it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                  val ic = currentInputConnection
+                  val selected = ic?.getSelectedText(0)
+                  if (selected.isNullOrEmpty()) {
+                      ic?.deleteSurroundingText(1, 0)
+                  } else {
+                      ic.commitText("", 1)
+                  }
+              }
+
+              val enterBtn = createKeyButton("↵", 1.5f, isSpecial = true, isAccent = true)
+              enterBtn.setOnClickListener {
+                  it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                  sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+              }
+
+              bottomRow.addView(shiftBtn)
+              bottomRow.addView(symBtn)
+              bottomRow.addView(spaceBtn)
+              bottomRow.addView(delBtn)
+              bottomRow.addView(enterBtn)
+
+              rootLayout.addView(bottomRow)
+          }
+
+          private fun createKeyButton(
+              label: String,
+              weight: Float,
+              isSpecial: Boolean,
+              isAccent: Boolean = false
+          ): Button {
+              return Button(this).apply {
+                  text = label
+                  isAllCaps = false
+                  setTextSize(TypedValue.COMPLEX_UNIT_SP, if (label.length > 1) 13f else 18f)
+                  typeface = Typeface.DEFAULT_BOLD
+                  setTextColor(Color.WHITE)
+                  gravity = Gravity.CENTER
+                  setPadding(0, 0, 0, 0)
+
+                  val bg = GradientDrawable().apply {
+                      cornerRadius = dpToPx(8).toFloat()
+                      setColor(
+                          when {
+                              isAccent -> Color.parseColor("#0284C7")
+                              isSpecial -> Color.parseColor("#334155")
+                              else -> Color.parseColor("#1E293B")
+                          }
+                      )
+                      setStroke(dpToPx(1), Color.parseColor("#475569"))
+                  }
+                  background = bg
+
+                  layoutParams = LinearLayout.LayoutParams(
+                      0,
+                      LinearLayout.LayoutParams.MATCH_PARENT,
+                      weight
+                  ).apply {
+                      val margin = dpToPx(2)
+                      setMargins(margin, 0, margin, 0)
+                  }
+              }
+          }
+
+          private fun commitText(text: String) {
+              currentInputConnection?.commitText(text, 1)
+          }
+
+          private fun dpToPx(dp: Int): Int {
+              return (dp * resources.displayMetrics.density).toInt()
+          }
+      }
+      EOF
+
+      # method.xml yaratish
+      cat << 'EOF' > app/src/main/res/xml/method.xml
+      <?xml version="1.0" encoding="utf-8"?>
+      <input-method xmlns:android="http://schemas.android.com/apk/res/android">
+          <subtype
+              android:label="Oʻzbek (F-Klaviatura v1.0)"
+              android:imeSubtypeLocale="uz_UZ"
+              android:imeSubtypeMode="keyboard" />
+      </input-method>
+      EOF
+
+      # AndroidManifest.xml yaratish
+      cat << 'EOF' > app/src/main/AndroidManifest.xml
+      <?xml version="1.0" encoding="utf-8"?>
+      <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+          <uses-permission android:name="android.permission.VIBRATE" />
+          <application
+              android:allowBackup="true"
+              android:label="Oʻzbek F-Klaviatura">
+              <activity
+                  android:name=".SetupActivity"
+                  android:exported="true"
+                  android:label="Oʻzbek F-Klaviatura">
+                  <intent-filter>
+                      <action android:name="android.intent.action.MAIN" />
+                      <category android:name="android.intent.category.LAUNCHER" />
+                  </intent-filter>
+              </activity>
+              <service
+                  android:name=".UzbekFKeyboardService"
+                  android:label="Oʻzbek F-Klaviaturasi (v1.0)"
+                  android:permission="android.permission.BIND_INPUT_METHOD"
+                  android:exported="true">
+                  <intent-filter>
+                      <action android:name="android.view.InputMethod" />
+                  </intent-filter>
+                  <meta-data
+                      android:name="android.view.im"
+                      android:resource="@xml/method" />
+              </service>
+          </application>
+      </manifest>
+      EOF
+
+      # settings.gradle yaratish
+      cat << 'EOF' > settings.gradle
+      pluginManagement {
+          repositories {
+              google()
+              mavenCentral()
+              gradlePluginPortal()
+          }
+      }
+      dependencyResolutionManagement {
+          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+          repositories {
+              google()
+              mavenCentral()
+          }
+      }
+      rootProject.name = "UzbekFKeyboard"
+      include ':app'
+      EOF
+
+      # Root build.gradle yaratish
+      cat << 'EOF' > build.gradle
+      plugins {
+          id 'com.android.application' version '8.2.2' apply false
+          id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
+      }
+      EOF
+
+      # App build.gradle yaratish
+      cat << 'EOF' > app/build.gradle
+      plugins {
+          id 'com.android.application'
+          id 'org.jetbrains.kotlin.android'
+      }
+      android {
+          namespace 'com.alharitm.uzbekfkeyboard'
+          compileSdk 34
+          defaultConfig {
+              applicationId "com.alharitm.uzbekfkeyboard"
+              minSdk 23
+              targetSdk 34
+              versionCode 1
+              versionName "1.0"
+          }
+          compileOptions {
+              sourceCompatibility JavaVersion.VERSION_17
+              targetCompatibility JavaVersion.VERSION_17
+          }
+          kotlinOptions {
+              jvmTarget = '17'
+          }
+      }
+      EOF
+
+      gradle assembleDebug --stacktrace
+
+  - name: 6. Tayyor APK faylni yuklab olish uchun chiqarish
+    uses: actions/upload-artifact@v4
+    with:
+      name: Alharitm-Uzbek-F-Keyboard-APK
+      path: app/build/outputs/apk/debug/app-debug.apk
