@@ -1,4 +1,4 @@
-name: Build Uzbek-F Android APK (Pro v2.1 - Crash Fixed)
+name: Build Uzbek-F Android Pro v3.0 (Play Store Ready APK & AAB)
 
 on:
   push:
@@ -24,12 +24,149 @@ jobs:
         with:
           gradle-version: '8.5'
 
-      - name: 4. Loyiha strukturasini avtomatik tayyorlash va APK yig'ish
+      - name: 4. Ilova ikonasi, Lug'at, Imlo tekshiruvi va Manba kodlarini yaratish
         run: |
           mkdir -p app/src/main/java/com/alharitm/uzbekfkeyboard
           mkdir -p app/src/main/res/xml
+          mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/res/mipmap-anydpi-v26
 
-          # UzbekFKeyboardService.kt (Pro v2.1 - Barcha crash xatoliklari tuzatilgan)
+          # 1. ILOVA IKONASI ORQA FONI (O'zbekiston bayrog'i chiziqlari: Moviy, Qizil, Oq, Yashil)
+          cat << 'EOF' > app/src/main/res/drawable/ic_launcher_background.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <!-- Moviy osmon qismi -->
+              <path android:fillColor="#0099B5" android:pathData="M0,0h108v36h-108z"/>
+              <!-- Yuqori qizil chiziq -->
+              <path android:fillColor="#CE1126" android:pathData="M0,36h108v2.5h-108z"/>
+              <!-- O'rta oq qism -->
+              <path android:fillColor="#FFFFFF" android:pathData="M0,38.5h108v31h-108z"/>
+              <!-- Quyi qizil chiziq -->
+              <path android:fillColor="#CE1126" android:pathData="M0,69.5h108v2.5h-108z"/>
+              <!-- Yashil qism -->
+              <path android:fillColor="#1EB53A" android:pathData="M0,72h108v36h-108z"/>
+          </vector>
+          EOF
+
+          # 2. ILOVA IKONASI OLD QISMI (Markaziy qalqon va 4 ta kvadrat ichida Ö, Ğ, Ş, Ç harflari)
+          cat << 'EOF' > app/src/main/res/drawable/ic_launcher_foreground.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+
+              <!-- Markaziy to'q ko'k shaffof kvadrat asos -->
+              <path
+                  android:fillColor="#E60F172A"
+                  android:strokeColor="#38BDF8"
+                  android:strokeWidth="1.5"
+                  android:pathData="M30,26 L78,26 A6,6 0 0,1 84,32 L84,76 A6,6 0 0,1 78,82 L30,82 A6,6 0 0,1 24,76 L24,32 A6,6 0 0,1 30,26 Z"/>
+
+              <!-- 4 ta tugma kvadrati (2x2) -->
+              <!-- 1-kvadrat: Ö (Yuqori chap - Moviy hoshiya) -->
+              <path
+                  android:fillColor="#1E293B"
+                  android:strokeColor="#0099B5"
+                  android:strokeWidth="1.2"
+                  android:pathData="M31,31 L50,31 A3,3 0 0,1 53,34 L53,50 A3,3 0 0,1 50,53 L31,53 A3,3 0 0,1 28,50 L28,34 A3,3 0 0,1 31,31 Z"/>
+
+              <!-- 2-kvadrat: Ğ (Yuqori o'ng - Yashil hoshiya) -->
+              <path
+                  android:fillColor="#1E293B"
+                  android:strokeColor="#1EB53A"
+                  android:strokeWidth="1.2"
+                  android:pathData="M58,31 L77,31 A3,3 0 0,1 80,34 L80,50 A3,3 0 0,1 77,53 L58,53 A3,3 0 0,1 55,50 L55,34 A3,3 0 0,1 58,31 Z"/>
+
+              <!-- 3-kvadrat: Ş (Quyi chap - Yashil hoshiya) -->
+              <path
+                  android:fillColor="#1E293B"
+                  android:strokeColor="#1EB53A"
+                  android:strokeWidth="1.2"
+                  android:pathData="M31,56 L50,56 A3,3 0 0,1 53,59 L53,75 A3,3 0 0,1 50,78 L31,78 A3,3 0 0,1 28,75 L28,59 A3,3 0 0,1 31,56 Z"/>
+
+              <!-- 4-kvadrat: Ç (Quyi o'ng - Moviy hoshiya) -->
+              <path
+                  android:fillColor="#1E293B"
+                  android:strokeColor="#0099B5"
+                  android:strokeWidth="1.2"
+                  android:pathData="M58,56 L77,56 A3,3 0 0,1 80,59 L80,75 A3,3 0 0,1 77,78 L58,78 A3,3 0 0,1 55,75 L55,59 A3,3 0 0,1 58,56 Z"/>
+
+              <!-- HARF 1: Ö (O halqasi + 2 nuqta) -->
+              <path
+                  android:strokeColor="#FFFFFF"
+                  android:strokeWidth="2.4"
+                  android:fillColor="#00000000"
+                  android:pathData="M40.5,38.5 A5,5.5 0 1,1 40.49,38.5 Z"/>
+              <path android:fillColor="#38BDF8" android:pathData="M37.5,34.2 h2.2 v2.2 h-2.2 z M41.3,34.2 h2.2 v2.2 h-2.2 z"/>
+
+              <!-- HARF 2: Ğ (G shakli + tepada brevis yoyi) -->
+              <path
+                  android:strokeColor="#FFFFFF"
+                  android:strokeWidth="2.3"
+                  android:strokeLineCap="round"
+                  android:fillColor="#00000000"
+                  android:pathData="M71.5,40.5 C69.5,38 64.5,38.5 63.5,43 C62.5,47.5 66,50 70.5,49 L70.5,44.5 L67.2,44.5"/>
+              <path
+                  android:strokeColor="#4ADE80"
+                  android:strokeWidth="1.8"
+                  android:strokeLineCap="round"
+                  android:fillColor="#00000000"
+                  android:pathData="M64.5,34.2 Q67.5,36.8 70.5,34.2"/>
+
+              <!-- HARF 3: Ş (S shakli + pastki sedilla) -->
+              <path
+                  android:strokeColor="#FFFFFF"
+                  android:strokeWidth="2.3"
+                  android:strokeLineCap="round"
+                  android:fillColor="#00000000"
+                  android:pathData="M44,61 C41,59.5 36.5,60.5 37,63.2 C37.5,66 44,65.5 44,69 C44,71.8 39,72.5 36.5,70.8"/>
+              <path
+                  android:strokeColor="#4ADE80"
+                  android:strokeWidth="1.8"
+                  android:strokeLineCap="round"
+                  android:fillColor="#00000000"
+                  android:pathData="M40.5,72.2 L39.8,75.5"/>
+
+              <!-- HARF 4: Ç (C shakli + pastki sedilla) -->
+              <path
+                  android:strokeColor="#FFFFFF"
+                  android:strokeWidth="2.3"
+                  android:strokeLineCap="round"
+                  android:fillColor="#00000000"
+                  android:pathData="M71.5,61.5 C68,59.5 63.5,61 63.5,65.8 C63.5,70.5 68,72 71.5,70"/>
+              <path
+                  android:strokeColor="#38BDF8"
+                  android:strokeWidth="1.8"
+                  android:strokeLineCap="round"
+                  android:fillColor="#00000000"
+                  android:pathData="M67.5,71.8 L66.8,75.2"/>
+          </vector>
+          EOF
+
+          # 3. ADAPTIVE ICON XML (Android 8.0+ va barcha qurilmalar uchun)
+          cat << 'EOF' > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@drawable/ic_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@drawable/ic_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+
+          # 4. ASOSIY KOTLIN DASTUR KODI (Pro v3.0: Haptik boshqaruv + O'zbek imlo tekshiruvi va so'z takliflari)
           cat << 'EOF' > app/src/main/java/com/alharitm/uzbekfkeyboard/UzbekFKeyboardService.kt
           package com.alharitm.uzbekfkeyboard
 
@@ -42,11 +179,13 @@ jobs:
           import android.graphics.Typeface
           import android.graphics.drawable.GradientDrawable
           import android.inputmethodservice.InputMethodService
+          import android.os.Build
           import android.os.Bundle
+          import android.os.VibrationEffect
+          import android.os.Vibrator
           import android.provider.Settings
           import android.util.TypedValue
           import android.view.Gravity
-          import android.view.HapticFeedbackConstants
           import android.view.KeyEvent
           import android.view.View
           import android.view.ViewGroup
@@ -56,6 +195,7 @@ jobs:
           import android.widget.EditText
           import android.widget.GridLayout
           import android.widget.HorizontalScrollView
+          import android.widget.ImageView
           import android.widget.LinearLayout
           import android.widget.ScrollView
           import android.widget.SeekBar
@@ -73,6 +213,240 @@ jobs:
               val subText: String
           )
 
+          /**
+           * O'ZBEK TILI IMLO TEKSHIRUVI VA SO'Z TAKLIFLARI BAZASI (Yangi Lotin Alifbosi: ö, ğ, ş, ç, ʼ)
+           */
+          object UzbekDictionary {
+              // Eng ko'p xato yoziladigan so'zlarni avtomatik to'g'rilash xaritasi
+              val DIRECT_FIXES = mapOf(
+                  "ozbek" to "özbek",
+                  "o'zbek" to "özbek",
+                  "uzbek" to "özbek",
+                  "ozbekiston" to "Özbekiston",
+                  "o'zbekiston" to "Özbekiston",
+                  "uzbekiston" to "Özbekiston",
+                  "toshkent" to "Toşkent",
+                  "toskent" to "Toşkent",
+                  "bosh" to "boş",
+                  "yaxshi" to "yaxşi",
+                  "yahshi" to "yaxşi",
+                  "yaxsi" to "yaxşi",
+                  "uchun" to "uçun",
+                  "ucun" to "uçun",
+                  "chiroyli" to "çiroyli",
+                  "ciroyli" to "çiroyli",
+                  "shahar" to "şahar",
+                  "sahar" to "şahar",
+                  "togri" to "töğri",
+                  "to'g'ri" to "töğri",
+                  "boladi" to "böladi",
+                  "bo'ladi" to "böladi",
+                  "bolib" to "bölib",
+                  "bo'lib" to "bölib",
+                  "qol" to "qöl",
+                  "qo'l" to "qöl",
+                  "koz" to "köz",
+                  "ko'z" to "köz",
+                  "soz" to "söz",
+                  "so'z" to "söz",
+                  "kop" to "köp",
+                  "ko'p" to "köp",
+                  "gozal" to "gözal",
+                  "go'zal" to "gözal",
+                  "ogil" to "öğil",
+                  "o'g'il" to "öğil",
+                  "bog" to "boğ",
+                  "tog" to "toğ",
+                  "sog" to "soğ",
+                  "ulug" to "uluğ",
+                  "ulugbek" to "Uluğbek",
+                  "mano" to "maʼno",
+                  "malumot" to "maʼlumot",
+                  "marifat" to "maʼrifat",
+                  "manaviyat" to "maʼnaviyat",
+                  "masuliyat" to "masʼuliyat",
+                  "talim" to "taʼlim",
+                  "tatil" to "taʼtil",
+                  "tasir" to "taʼsir",
+                  "elon" to "eʼlon",
+                  "etibor" to "eʼtibor",
+                  "sanat" to "sanʼat",
+                  "surat" to "surʼat",
+                  "jurat" to "jurʼat",
+                  "qatiy" to "qatʼiy",
+                  "memor" to "meʼmor",
+                  "nemat" to "neʼmat",
+                  "sher" to "şeʼr",
+                  "shula" to "şuʼla",
+                  "ish" to "iş",
+                  "qish" to "qiş",
+                  "kuch" to "kuç",
+                  "kech" to "keç",
+                  "ochiq" to "oçiq",
+                  "kichik" to "kiçik",
+                  "tinch" to "tinç",
+                  "barcha" to "barça",
+                  "qachon" to "qaçon",
+                  "hech" to "heç",
+                  "chunki" to "çunki",
+                  "shuning" to "şuning",
+                  "shunday" to "şunday",
+                  "osh" to "oş",
+                  "yosh" to "yoş",
+                  "quyosh" to "quyoş",
+                  "qardosh" to "qardoş",
+                  "vatandosh" to "vatandoş",
+                  "ортоk" to "örtoq",
+                  "ortoq" to "örtoq",
+                  "o'rtoq" to "örtoq",
+                  "ozim" to "özim",
+                  "o'zim" to "özim",
+                  "ozimiz" to "özimiz",
+                  "kongil" to "köngil",
+                  "ko'ngil" to "köngil",
+                  "song" to "söng",
+                  "so'ng" to "söng",
+                  "organish" to "örganiş",
+                  "o'rganish" to "örganiş",
+                  "oqish" to "öqiş",
+                  "o'qish" to "öqiş",
+                  "ozgarish" to "özgariş",
+                  "yozish" to "yoziş",
+                  "bilish" to "biliş",
+                  "kelish" to "keliş",
+                  "ketish" to "ketiş",
+                  "chiqish" to "çiqiş",
+                  "kirish" to "kiriş",
+                  "korish" to "köriş"
+              )
+
+              // Faol o'zbekcha so'zlar ombori (Yangi alifboda)
+              val WORDS = listOf(
+                  "assalomu", "alaykum", "va", "bilan", "uçun", "ham", "bu", "şu", "u", "biz", "siz", "ular",
+                  "men", "sen", "öz", "özim", "özimiz", "özbek", "Özbekiston", "Respublikasi", "Toşkent",
+                  "Samarqand", "Buxoro", "Xiva", "Andijon", "Farğona", "Namangan", "Qaşqadaryo", "Surxondaryo",
+                  "Jizzax", "Sirdaryo", "Navoiy", "Xorazm", "Qoraqalpoğiston", "töğri", "yaxşi", "çiroyli",
+                  "katta", "kiçik", "yangi", "eski", "bugun", "ertaga", "keça", "hozir", "doim", "har", "bir",
+                  "ikki", "uç", "tört", "beş", "olti", "yetti", "sakkiz", "töqqiz", "ön", "yuz", "ming",
+                  "ota", "ona", "bola", "bolalar", "oilamiz", "örtoq", "döst", "inson", "odam", "odamlar",
+                  "xalq", "davlat", "mamlakat", "jamiyat", "vatan", "vatanimiz", "bayram", "baxt", "omad",
+                  "taʼlim", "maʼlumot", "maʼno", "maʼrifat", "maʼnaviyat", "masʼuliyat", "eʼlon", "eʼtibor",
+                  "eʼtirof", "sanʼat", "surʼat", "jurʼat", "qatʼiy", "meʼmor", "neʼmat", "şeʼr", "şuʼla",
+                  "taʼtil", "taʼsir", "taʼminot", "ilm", "fan", "kitob", "maktab", "universitet", "dars",
+                  "ustoz", "öğil", "qiz", "köngil", "qalb", "yurak", "köz", "qöl", "boş", "söz", "til",
+                  "yoziş", "öqiş", "örganiş", "iş", "işla", "işlaydi", "böladi", "bölib", "bölsin", "emas",
+                  "kerak", "mumkin", "lozim", "şart", "zarur", "muhim", "dolzarb", "masala", "qaror", "qonun",
+                  "adolat", "haqiqat", "vijdon", "vaqt", "soat", "kun", "tun", "oy", "yil", "bahor", "yoz",
+                  "kuz", "qiş", "quyoş", "yulduz", "osmon", "yer", "suv", "havo", "toğ", "boğ", "dala",
+                  "daraxt", "gul", "lola", "olma", "non", "çoy", "asal", "sut", "paxta", "ğalla", "rizq",
+                  "baraka", "sadoqat", "muhabbat", "mehr", "oqibat", "hurmat", "izzat", "rahmat", "marhamat",
+                  "salom", "xayr", "albatta", "lekin", "ammo", "biroq", "agar", "çunki", "şuning", "şunday",
+                  "qanday", "qaçon", "qayerda", "nega", "kim", "nima", "neça", "barça", "hamma", "heç",
+                  "köp", "oz", "kam", "juda", "eng", "oliy", "buyuk", "uluğ", "aziz", "muqaddas", "tinç",
+                  "tinçlik", "farovon", "obod", "ozod", "erkin", "mustaqil", "kelajak", "taraqqiyot",
+                  "texnologiya", "dastur", "kompyuter", "telefon", "internet", "klaviatura", "standart",
+                  "milliy", "alifbo", "harf", "tovuş", "ohang", "musiqa", "qoşiq", "raqs", "sport", "ğalaba",
+                  "yutuq", "natija", "maqsad", "orzu", "umid", "işonç", "quvonç", "xursand", "baxtli",
+                  "sogʻlom", "soğlom", "soğliq", "salomatlik", "hayot", "umr", "dunyo", "olam", "jahon",
+                  "xalqaro", "hamkorlik", "uchrashuv", "uçraşuv", "suhbat", "fikr", "ğoya", "taklif", "yordam",
+                  "kömak", "xizmat", "vazifa", "burch", "burç", "imkon", "imkoniyat", "fursat", "foyda",
+                  "samarali", "tez", "oson", "qulay", "ravon", "aniq", "töliq", "mukammal", "namuna", "misol"
+              )
+
+              val DEFAULT_SUGGESTIONS = listOf("Assalomu alaykum", "Özbekiston", "yaxşi", "töğri", "maʼlumot", "taʼlim")
+
+              // Eski lotin yozuvini (o', g', sh, ch) yangi alifboga (ö, ğ, ş, ç) o'girish
+              fun convertToNewOrthography(raw: String): String {
+                  var s = raw
+                  s = s.replace("o'", "ö").replace("O'", "Ö")
+                      .replace("oʻ", "ö").replace("Oʻ", "Ö")
+                      .replace("g'", "ğ").replace("G'", "Ğ")
+                      .replace("gʻ", "ğ").replace("Gʻ", "Ğ")
+                      .replace("sh", "ş").replace("Sh", "Ş").replace("SH", "Ş")
+                      .replace("ch", "ç").replace("Ch", "Ç").replace("CH", "Ç")
+                  return s
+              }
+
+              // Diakritik belgilarsiz qidiruv uchun normalizatsiya
+              private fun fold(s: String): String {
+                  return s.lowercase()
+                      .replace('ö', 'o')
+                      .replace('ğ', 'g')
+                      .replace('ş', 's')
+                      .replace('ç', 'c')
+                      .replace("ʼ", "")
+                      .replace("'", "")
+              }
+
+              // Kiritilayotgan so'z uchun eng mos 3-4 ta to'g'ri variantni topish
+              fun getSuggestions(currentWord: String, enabled: Boolean): List<String> {
+                  if (!enabled) return emptyList()
+                  val trimmed = currentWord.trim()
+                  if (trimmed.isEmpty()) return DEFAULT_SUGGESTIONS.take(3)
+
+                  val lower = trimmed.lowercase()
+                  val isCapitalized = trimmed[0].isUpperCase()
+                  val results = LinkedHashSet<String>()
+
+                  fun applyCase(word: String): String {
+                      if (word.isEmpty()) return word
+                      return if (isCapitalized) word.replaceFirstChar { it.uppercase() } else word
+                  }
+
+                  // 1. To'g'ridan-to'g'ri xato lug'atidan tekshirish
+                  DIRECT_FIXES[lower]?.let { results.add(applyCase(it)) }
+
+                  // 2. Agar o', g', sh, ch yozilgan bo'lsa, yangi alifbodagi shaklini birinchi qilib chiqarish
+                  val converted = convertToNewOrthography(trimmed)
+                  if (converted != trimmed) {
+                      results.add(converted)
+                  }
+
+                  // 3. Lug'atdan aynan boshlanishi (prefix) bo'yicha qidirish
+                  val foldedInput = fold(lower)
+                  for (w in WORDS) {
+                      if (w.lowercase().startsWith(lower) || fold(w).startsWith(foldedInput)) {
+                          results.add(applyCase(w))
+                          if (results.size >= 4) break
+                      }
+                  }
+
+                  // 4. Agar hali ham kam bo'lsa, Levenshtein (1-2 harf xato) bo'yicha yaqin so'zlarni topish
+                  if (results.size < 3 && foldedInput.length >= 2) {
+                      val closeMatches = WORDS
+                          .map { w -> w to editDistance(foldedInput, fold(w)) }
+                          .filter { it.second <= 2 }
+                          .sortedBy { it.second }
+                          .map { applyCase(it.first) }
+                      for (m in closeMatches) {
+                          results.add(m)
+                          if (results.size >= 4) break
+                      }
+                  }
+
+                  // Foydalanuvchi yozayotgan asl so'zni ham oxiriga qo'shamiz
+                  if (results.isEmpty()) {
+                      results.add(trimmed)
+                  }
+                  return results.take(4)
+              }
+
+              private fun editDistance(a: String, b: String): Int {
+                  val dp = IntArray(b.length + 1) { it }
+                  for (i in 1..a.length) {
+                      var prev = dp[0]
+                      dp[0] = i
+                      for (j in 1..b.length) {
+                          val temp = dp[j]
+                          val cost = if (a[i - 1] == b[j - 1]) 0 else 1
+                          dp[j] = minOf(dp[j] + 1, dp[j - 1] + 1, prev + cost)
+                          prev = temp
+                      }
+                  }
+                  return dp[b.length]
+              }
+          }
+
           object KbConfig {
               const val PREFS_NAME = "uzbek_f_prefs"
               const val KEY_LAYOUT = "layout_id"
@@ -82,18 +456,22 @@ jobs:
               const val KEY_LANG_BTN = "show_lang_key"
               const val KEY_COMMA_BTN = "show_comma_key"
               const val KEY_PERIOD_BTN = "show_period_key"
-              const val KEY_FONT_SCALE = "font_scale" // 80..130 (%)
+              const val KEY_FONT_SCALE = "font_scale"
+              const val KEY_HAPTIC_ENABLED = "haptic_enabled"
+              const val KEY_HAPTIC_STRENGTH = "haptic_strength" // 5..60 ms
+              const val KEY_SPELL_CHECK = "spell_check_enabled"
+              const val KEY_AUTO_CORRECT = "auto_correct_space"
 
               val THEMES = listOf(
                   KbTheme("default_dark", "Default Dark", "#131314", "#2D2E30", "#3C4043", "#A8C7FA", "#E3E3E3", "#9AA0A6"),
                   KbTheme("default_light", "Default Light", "#ECEFF1", "#FFFFFF", "#CFD8DC", "#0B57D0", "#1F1F1F", "#5F6368"),
+                  KbTheme("uzbek_flag", "Oʻzbekiston Bayrogʻi", "#06283D", "#0099B5", "#1EB53A", "#FFFFFF", "#FFFFFF", "#E2E8F0"),
                   KbTheme("obsidian_oled", "Obsidian OLED", "#000000", "#1A1C1E", "#282A2D", "#38BDF8", "#F8FAFC", "#94A3B8"),
                   KbTheme("slate_blue", "Slate Blue", "#0F172A", "#1E293B", "#334155", "#60A5FA", "#F8FAFC", "#94A3B8"),
                   KbTheme("crimson_red", "Crimson Red", "#3B0A0A", "#5C1414", "#7F1D1D", "#FCA5A5", "#FFF5F5", "#FECACA"),
                   KbTheme("forest_green", "Forest Green", "#062E1E", "#0A4730", "#115E40", "#6EE7B7", "#ECFDF5", "#A7F3D0"),
                   KbTheme("deep_teal", "Deep Teal", "#042F2E", "#115E59", "#0F766E", "#5EEAD4", "#F0FDFA", "#99F6E4"),
-                  KbTheme("royal_blue", "Royal Blue", "#0B2447", "#19376D", "#264E86", "#93C5FD", "#EFF6FF", "#BFDBFE"),
-                  KbTheme("sky_cyan", "Sky Cyan", "#CFFAFE", "#FFFFFF", "#A5F3FC", "#0891B2", "#083344", "#155E75")
+                  KbTheme("royal_blue", "Royal Blue", "#0B2447", "#19376D", "#264E86", "#93C5FD", "#EFF6FF", "#BFDBFE")
               )
 
               val LAYOUT_NAMES = linkedMapOf(
@@ -126,7 +504,7 @@ jobs:
                           listOf("a", "s", "d", "f", "g", "h", "j", "k", "l", "ş", "ç"),
                           listOf("z", "x", "c", "v", "b", "n", "m", "ʼ")
                       )
-                      else -> listOf( // f_v1_0
+                      else -> listOf(
                           listOf("f", "g", "ğ", "o", "q", "d", "r", "n", "h", "p"),
                           listOf("u", "i", "e", "a", "ö", "t", "k", "l", "m", "s"),
                           listOf("j", "x", "v", "ç", "z", "ş", "b", "y", "ʼ")
@@ -168,26 +546,67 @@ jobs:
               private fun renderSettingsUI() {
                   contentBox.removeAllViews()
 
-                  // Header Card
+                  // Header Card with Custom Flag + ÖĞŞÇ Emblem
                   val headerCard = createCard("#0F172A").apply {
+                      val topBrandRow = LinearLayout(this@SetupActivity).apply {
+                          orientation = LinearLayout.HORIZONTAL
+                          gravity = Gravity.CENTER_VERTICAL
+                      }
+
+                      // Vizual Nishon: O'zbekiston bayrog'i ranglari va Ö Ğ Ş Ç
+                      val badgeBox = LinearLayout(this@SetupActivity).apply {
+                          orientation = LinearLayout.VERTICAL
+                          gravity = Gravity.CENTER
+                          background = GradientDrawable().apply {
+                              cornerRadius = dp(14).toFloat()
+                              colors = intArrayOf(
+                                  KbConfig.safeColor("#0099B5"),
+                                  KbConfig.safeColor("#FFFFFF"),
+                                  KbConfig.safeColor("#1EB53A")
+                              )
+                              setStroke(dp(2), KbConfig.safeColor("#CE1126"))
+                          }
+                          layoutParams = LinearLayout.LayoutParams(dp(58), dp(58)).apply {
+                              rightMargin = dp(12)
+                          }
+                      }
+                      val badgeTxt = TextView(this@SetupActivity).apply {
+                          text = "Ö Ğ\nŞ Ç"
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                          typeface = Typeface.DEFAULT_BOLD
+                          gravity = Gravity.CENTER
+                          setTextColor(KbConfig.safeColor("#0F172A"))
+                      }
+                      badgeBox.addView(badgeTxt)
+
+                      val titleCol = LinearLayout(this@SetupActivity).apply {
+                          orientation = LinearLayout.VERTICAL
+                      }
                       val title = TextView(this@SetupActivity).apply {
-                          text = "OʻZBEK F-KLAVIATURASI PRO (v2.1)"
-                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                          text = "OʻZBEK F-KLAVIATURASI PRO v3.0"
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
                           typeface = Typeface.DEFAULT_BOLD
                           setTextColor(KbConfig.safeColor("#38BDF8"))
                       }
                       val sub = TextView(this@SetupActivity).apply {
-                          text = "Alharitm.com • Gboard uslubidagi koʻp maketli va mavzuli tizim klaviaturasi"
-                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                          text = "Alharitm.com • Imlo tekshiruvi, Soʻz takliflari va Haptik boshqaruv"
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
                           setTextColor(KbConfig.safeColor("#CBD5E1"))
-                          setPadding(0, dp(4), 0, dp(12))
                       }
+                      titleCol.addView(title)
+                      titleCol.addView(sub)
+
+                      topBrandRow.addView(badgeBox)
+                      topBrandRow.addView(titleCol)
 
                       val step1 = Button(this@SetupActivity).apply {
                           text = "1-QADAM: Tizim sozlamalaridan yoqish ⚙️"
                           isAllCaps = false
                           setTextColor(Color.WHITE)
                           background = roundRect("#0284C7", dp(12))
+                          val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                          lp.topMargin = dp(14)
+                          layoutParams = lp
                           setOnClickListener { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
                       }
                       val step2 = Button(this@SetupActivity).apply {
@@ -205,7 +624,7 @@ jobs:
                       }
 
                       val testInput = EditText(this@SetupActivity).apply {
-                          hint = "✍️ Klaviaturani shu yerda yozib sinab koʻring..."
+                          hint = "✍️ Shu yerda yozib imlo va takliflarni sinab koʻring..."
                           setHintTextColor(KbConfig.safeColor("#94A3B8"))
                           setTextColor(Color.WHITE)
                           setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
@@ -217,15 +636,67 @@ jobs:
                           layoutParams = lp
                       }
 
-                      addView(title)
-                      addView(sub)
+                      addView(topBrandRow)
                       addView(step1)
                       addView(step2)
                       addView(testInput)
                   }
                   contentBox.addView(headerCard)
 
-                  // Section 1: Keyboard Layout Selector
+                  // Section 1: O'zbek Imlo Tekshiruvi va Haptik (Vibratsiya) Sozlamalari
+                  contentBox.addView(sectionHeader("Imlo Tekshiruvi va Vibratsiya (Spell Check & Haptics)"))
+                  val smartCard = createCard("#FFFFFF")
+
+                  smartCard.addView(createSwitchRow(
+                      "Oʻzbekcha imlo va soʻz takliflari",
+                      "Yozayotganda yuqori qatorda toʻgʻri soʻz variantlarini (ö, ğ, ş, ç, ʼ bilan) koʻrsatish",
+                      prefs.getBoolean(KbConfig.KEY_SPELL_CHECK, true)
+                  ) { prefs.edit().putBoolean(KbConfig.KEY_SPELL_CHECK, it).apply() })
+
+                  smartCard.addView(createSwitchRow(
+                      "Boʻshliq (Space) bosilganda avto-toʻgʻrilash",
+                      "Masalan: 'ozbek' ➔ 'özbek', 'talim' ➔ 'taʼlim', 'yaxshi' ➔ 'yaxşi'",
+                      prefs.getBoolean(KbConfig.KEY_AUTO_CORRECT, true)
+                  ) { prefs.edit().putBoolean(KbConfig.KEY_AUTO_CORRECT, it).apply() })
+
+                  val hapticOn = prefs.getBoolean(KbConfig.KEY_HAPTIC_ENABLED, true)
+                  smartCard.addView(createSwitchRow(
+                      "Tugma bosilganda vibratsiya (Haptik aloqa)",
+                      "Yozish paytida barmoqqa yengil taktil sezgi berish (istakka qarab yoqish/oʻchirish)",
+                      hapticOn
+                  ) {
+                      prefs.edit().putBoolean(KbConfig.KEY_HAPTIC_ENABLED, it).apply()
+                      renderSettingsUI()
+                  })
+
+                  if (hapticOn) {
+                      val hStrength = prefs.getInt(KbConfig.KEY_HAPTIC_STRENGTH, 18)
+                      val hLabel = TextView(this).apply {
+                          text = "Vibratsiya kuchi: $hStrength ms"
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                          typeface = Typeface.DEFAULT_BOLD
+                          setTextColor(KbConfig.safeColor("#0F172A"))
+                          setPadding(0, dp(6), 0, dp(4))
+                      }
+                      val hSeek = SeekBar(this).apply {
+                          max = 50
+                          progress = (hStrength - 5).coerceIn(0, 50)
+                          setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                              override fun onProgressChanged(sb: SeekBar?, p: Int, fromUser: Boolean) {
+                                  val ms = 5 + p
+                                  hLabel.text = "Vibratsiya kuchi: $ms ms"
+                                  prefs.edit().putInt(KbConfig.KEY_HAPTIC_STRENGTH, ms).apply()
+                              }
+                              override fun onStartTrackingTouch(sb: SeekBar?) {}
+                              override fun onStopTrackingTouch(sb: SeekBar?) {}
+                          })
+                      }
+                      smartCard.addView(hLabel)
+                      smartCard.addView(hSeek)
+                  }
+                  contentBox.addView(smartCard)
+
+                  // Section 2: Keyboard Layout Selector
                   contentBox.addView(sectionHeader("Klaviatura Joylashuvi (Layouts)"))
                   val layoutCard = createCard("#FFFFFF")
                   val activeLayout = prefs.getString(KbConfig.KEY_LAYOUT, "f_v1_0") ?: "f_v1_0"
@@ -252,8 +723,8 @@ jobs:
                   }
                   contentBox.addView(layoutCard)
 
-                  // Section 2: Preferences (Gboard Keys & Switches)
-                  contentBox.addView(sectionHeader("Tugmalar va Sozlamalar (Preferences)"))
+                  // Section 3: Preferences (Gboard Keys & Switches)
+                  contentBox.addView(sectionHeader("Tugmalar va Koʻrinish (Preferences)"))
                   val prefCard = createCard("#FFFFFF")
 
                   prefCard.addView(createSwitchRow(
@@ -286,7 +757,6 @@ jobs:
                       prefs.getBoolean(KbConfig.KEY_PERIOD_BTN, true)
                   ) { prefs.edit().putBoolean(KbConfig.KEY_PERIOD_BTN, it).apply() })
 
-                  // Font Size Slider
                   val scaleVal = prefs.getInt(KbConfig.KEY_FONT_SCALE, 100)
                   val fontLabel = TextView(this).apply {
                       text = "Shrift oʻlchami (Font size): $scaleVal%"
@@ -312,7 +782,7 @@ jobs:
                   prefCard.addView(seek)
                   contentBox.addView(prefCard)
 
-                  // Section 3: Theme Grid
+                  // Section 4: Theme Grid
                   contentBox.addView(sectionHeader("Mavzular va Ranglar (Themes)"))
                   val themeCard = createCard("#FFFFFF")
                   val activeTheme = prefs.getString(KbConfig.KEY_THEME, "default_dark") ?: "default_dark"
@@ -453,6 +923,7 @@ jobs:
               private var lastSpaceTime = 0L
               private var lastShiftTime = 0L
               private var rootContainer: LinearLayout? = null
+              private var suggestionBarContainer: LinearLayout? = null
               private lateinit var prefs: SharedPreferences
 
               private val longPressMap = mapOf(
@@ -508,6 +979,50 @@ jobs:
                   }
               }
 
+              // Haptik aloqa (Foydalanuvchi sozlamada yoqqan bo'lsa ishlaydi)
+              private fun triggerHaptic(isLongPress: Boolean = false) {
+                  if (!::prefs.isInitialized) return
+                  if (!prefs.getBoolean(KbConfig.KEY_HAPTIC_ENABLED, true)) return
+                  val baseMs = prefs.getInt(KbConfig.KEY_HAPTIC_STRENGTH, 18).toLong()
+                  val duration = if (isLongPress) (baseMs + 15L) else baseMs
+                  try {
+                      val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                          vibrator?.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
+                      } else {
+                          @Suppress("DEPRECATION")
+                          vibrator?.vibrate(duration)
+                      }
+                  } catch (_: Exception) {}
+              }
+
+              // Kursordan oldingi yozilayotgan joriy so'zni olish
+              private fun getCurrentWordBeforeCursor(): String {
+                  val ic = currentInputConnection ?: return ""
+                  val before = ic.getTextBeforeCursor(40, 0)?.toString() ?: return ""
+                  var idx = before.length - 1
+                  while (idx >= 0) {
+                      val c = before[idx]
+                      if (c.isLetterOrDigit() || c == 'ʼ' || c == '\'' || c == 'ʻ') {
+                          idx--
+                      } else {
+                          break
+                      }
+                  }
+                  return before.substring(idx + 1)
+              }
+
+              // So'z taklifidan birini tanlaganda joriy chala/xato so'zni to'g'risiga almashtirish
+              private fun replaceCurrentWordWith(suggestion: String) {
+                  val ic = currentInputConnection ?: return
+                  val curWord = getCurrentWordBeforeCursor()
+                  if (curWord.isNotEmpty()) {
+                      ic.deleteSurroundingText(curWord.length, 0)
+                  }
+                  ic.commitText("$suggestion ", 1)
+                  updateSuggestionsBar()
+              }
+
               private fun getActiveTheme(): KbTheme {
                   if (!::prefs.isInitialized) {
                       prefs = getSharedPreferences(KbConfig.PREFS_NAME, Context.MODE_PRIVATE)
@@ -540,7 +1055,25 @@ jobs:
                   // 1. Gboard Top Toolbar Strip
                   container.addView(buildTopToolbar(theme))
 
-                  // 2. Main Body View
+                  // 2. O'zbekcha Imlo va So'z Takliflari Qatori (Suggestions Strip)
+                  val spellEnabled = prefs.getBoolean(KbConfig.KEY_SPELL_CHECK, true)
+                  if (spellEnabled && currentMode == ViewMode.LETTERS) {
+                      val sugBox = LinearLayout(this).apply {
+                          orientation = LinearLayout.HORIZONTAL
+                          gravity = Gravity.CENTER_VERTICAL
+                          layoutParams = LinearLayout.LayoutParams(
+                              ViewGroup.LayoutParams.MATCH_PARENT,
+                              dp(36)
+                          ).apply { bottomMargin = dp(4) }
+                      }
+                      suggestionBarContainer = sugBox
+                      container.addView(sugBox)
+                      updateSuggestionsBar()
+                  } else {
+                      suggestionBarContainer = null
+                  }
+
+                  // 3. Main Body View
                   when (currentMode) {
                       ViewMode.LETTERS -> buildLettersView(container, theme)
                       ViewMode.SYM1 -> buildSymbolsView(container, theme, isSecondary = false)
@@ -553,6 +1086,43 @@ jobs:
                   }
               }
 
+              private fun updateSuggestionsBar() {
+                  val bar = suggestionBarContainer ?: return
+                  bar.removeAllViews()
+                  val spellEnabled = prefs.getBoolean(KbConfig.KEY_SPELL_CHECK, true)
+                  if (!spellEnabled) return
+
+                  val theme = getActiveTheme()
+                  val curWord = getCurrentWordBeforeCursor()
+                  val suggestions = UzbekDictionary.getSuggestions(curWord, true)
+
+                  if (suggestions.isEmpty()) return
+
+                  suggestions.forEachIndexed { idx, word ->
+                      val isPrimary = (idx == 0 && curWord.isNotEmpty() && word.lowercase() != curWord.lowercase())
+                      val chip = Button(this).apply {
+                          text = if (isPrimary) "✨ $word" else word
+                          isAllCaps = false
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                          typeface = if (idx == 0) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                          setTextColor(KbConfig.safeColor(if (isPrimary) theme.boardBg else theme.keyText))
+                          setPadding(dp(8), 0, dp(8), 0)
+                          background = GradientDrawable().apply {
+                              cornerRadius = dp(14).toFloat()
+                              setColor(KbConfig.safeColor(if (isPrimary) theme.accentBg else theme.specialKeyBg))
+                          }
+                          layoutParams = LinearLayout.LayoutParams(0, dp(32), 1f).apply {
+                              setMargins(dp(3), 0, dp(3), 0)
+                          }
+                          setOnClickListener {
+                              triggerHaptic()
+                              replaceCurrentWordWith(word)
+                          }
+                      }
+                      bar.addView(chip)
+                  }
+              }
+
               private fun buildTopToolbar(theme: KbTheme): View {
                   val bar = LinearLayout(this).apply {
                       orientation = LinearLayout.HORIZONTAL
@@ -560,8 +1130,8 @@ jobs:
                       weightSum = 6f
                       layoutParams = LinearLayout.LayoutParams(
                           ViewGroup.LayoutParams.MATCH_PARENT,
-                          dp(40)
-                      ).apply { bottomMargin = dp(4) }
+                          dp(38)
+                      ).apply { bottomMargin = dp(2) }
                   }
 
                   fun toolBtn(icon: String, active: Boolean = false, onClick: () -> Unit): View {
@@ -575,11 +1145,11 @@ jobs:
                               cornerRadius = dp(18).toFloat()
                               setColor(if (active) KbConfig.safeColor(theme.accentBg) else Color.TRANSPARENT)
                           }
-                          layoutParams = LinearLayout.LayoutParams(0, dp(34), 1f).apply {
+                          layoutParams = LinearLayout.LayoutParams(0, dp(32), 1f).apply {
                               setMargins(dp(3), 0, dp(3), 0)
                           }
                           setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               onClick()
                           }
                       }
@@ -625,13 +1195,13 @@ jobs:
                           weightSum = 10f
                           layoutParams = LinearLayout.LayoutParams(
                               ViewGroup.LayoutParams.MATCH_PARENT,
-                              dp(40)
+                              dp(38)
                           ).apply { bottomMargin = dp(5) }
                       }
                       for (n in listOf("1","2","3","4","5","6","7","8","9","0")) {
-                          val btn = createKey(n, 1f, theme, isSpecial = false, heightDp = 40)
+                          val btn = createKey(n, 1f, theme, isSpecial = false, heightDp = 38)
                           btn.setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               commit(n)
                           }
                           numRow.addView(btn)
@@ -655,7 +1225,7 @@ jobs:
                           val outChar = formatCase(k)
                           val btn = createKey(outChar, 1f, theme, isSpecial = false)
                           btn.setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               commit(outChar)
                               if (shiftState == 1) {
                                   shiftState = 0
@@ -665,7 +1235,7 @@ jobs:
                           val alt = longPressMap[k]
                           if (alt != null) {
                               btn.setOnLongClickListener {
-                                  it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                  triggerHaptic(isLongPress = true)
                                   commit(formatCase(alt))
                                   true
                               }
@@ -692,7 +1262,7 @@ jobs:
                   }
                   val shiftBtn = createKey(shiftLabel, 1.3f, theme, isSpecial = true, isAccent = (shiftState > 0))
                   shiftBtn.setOnClickListener {
-                      it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                      triggerHaptic()
                       val now = System.currentTimeMillis()
                       shiftState = if (now - lastShiftTime < 320L) {
                           2
@@ -710,7 +1280,7 @@ jobs:
                       val outChar = formatCase(k)
                       val btn = createKey(outChar, 1f, theme, isSpecial = false)
                       btn.setOnClickListener {
-                          it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                          triggerHaptic()
                           commit(outChar)
                           if (shiftState == 1) {
                               shiftState = 0
@@ -720,7 +1290,7 @@ jobs:
                       val alt = longPressMap[k]
                       if (alt != null) {
                           btn.setOnLongClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                              triggerHaptic(isLongPress = true)
                               commit(formatCase(alt))
                               true
                           }
@@ -730,12 +1300,13 @@ jobs:
 
                   val delBtn = createKey("⌫", 1.3f, theme, isSpecial = true)
                   delBtn.setOnClickListener {
-                      it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                      triggerHaptic()
                       deleteChar()
                   }
                   delBtn.setOnLongClickListener {
-                      it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                      triggerHaptic(isLongPress = true)
                       currentInputConnection?.deleteSurroundingText(12, 0)
+                      updateSuggestionsBar()
                       true
                   }
                   row3Layout.addView(delBtn)
@@ -764,7 +1335,7 @@ jobs:
                           val label = if (k == "DEL") "⌫" else k
                           val btn = createKey(label, weight, theme, isSpecial = isSpec)
                           btn.setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               when (k) {
                                   "=\\<" -> { currentMode = ViewMode.SYM2; renderKeyboard() }
                                   "?123" -> { currentMode = ViewMode.SYM1; renderKeyboard() }
@@ -787,22 +1358,22 @@ jobs:
                   }
 
                   botRow.addView(createKey("ABC", 1.5f, theme, isSpecial = true).apply {
-                      setOnClickListener { currentMode = ViewMode.LETTERS; renderKeyboard() }
+                      setOnClickListener { triggerHaptic(); currentMode = ViewMode.LETTERS; renderKeyboard() }
                   })
                   botRow.addView(createKey(if (isSecondary) "<" else ",", 1f, theme, isSpecial = true).apply {
-                      setOnClickListener { commit(if (isSecondary) "<" else ",") }
+                      setOnClickListener { triggerHaptic(); commit(if (isSecondary) "<" else ",") }
                   })
                   botRow.addView(createKey("1234", 1.2f, theme, isSpecial = true).apply {
-                      setOnClickListener { currentMode = ViewMode.NUMPAD; renderKeyboard() }
+                      setOnClickListener { triggerHaptic(); currentMode = ViewMode.NUMPAD; renderKeyboard() }
                   })
                   botRow.addView(createKey(getShortLayoutLabel(), 3.8f, theme, isSpecial = false).apply {
-                      setOnClickListener { commit(" ") }
+                      setOnClickListener { triggerHaptic(); commit(" ") }
                   })
                   botRow.addView(createKey(if (isSecondary) ">" else ".", 1f, theme, isSpecial = true).apply {
-                      setOnClickListener { commit(if (isSecondary) ">" else ".") }
+                      setOnClickListener { triggerHaptic(); commit(if (isSecondary) ">" else ".") }
                   })
                   botRow.addView(createKey("↵", 1.5f, theme, isSpecial = true, isAccent = true).apply {
-                      setOnClickListener { sendEnter() }
+                      setOnClickListener { triggerHaptic(); sendEnter() }
                   })
                   container.addView(botRow)
               }
@@ -827,7 +1398,7 @@ jobs:
                           val isSpec = (idx == 0 || idx == 4)
                           val btn = createKey(k, w, theme, isSpecial = isSpec, heightDp = 52)
                           btn.setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               when (k) {
                                   "␣" -> commit(" ")
                                   "⌫" -> deleteChar()
@@ -845,22 +1416,22 @@ jobs:
                       layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50))
                   }
                   bot.addView(createKey("ABC", 1f, theme, isSpecial = true).apply {
-                      setOnClickListener { currentMode = ViewMode.LETTERS; renderKeyboard() }
+                      setOnClickListener { triggerHaptic(); currentMode = ViewMode.LETTERS; renderKeyboard() }
                   })
                   bot.addView(createKey("/", 0.8f, theme, isSpecial = true).apply {
-                      setOnClickListener { commit("/") }
+                      setOnClickListener { triggerHaptic(); commit("/") }
                   })
                   bot.addView(createKey("!?#", 0.9f, theme, isSpecial = true).apply {
-                      setOnClickListener { currentMode = ViewMode.SYM1; renderKeyboard() }
+                      setOnClickListener { triggerHaptic(); currentMode = ViewMode.SYM1; renderKeyboard() }
                   })
                   bot.addView(createKey("0", 1.5f, theme, isSpecial = false).apply {
-                      setOnClickListener { commit("0") }
+                      setOnClickListener { triggerHaptic(); commit("0") }
                   })
                   bot.addView(createKey("=", 0.8f, theme, isSpecial = true).apply {
-                      setOnClickListener { commit("=") }
+                      setOnClickListener { triggerHaptic(); commit("=") }
                   })
                   bot.addView(createKey("↵", 1f, theme, isSpecial = true, isAccent = true).apply {
-                      setOnClickListener { sendEnter() }
+                      setOnClickListener { triggerHaptic(); sendEnter() }
                   })
                   container.addView(bot)
               }
@@ -885,7 +1456,7 @@ jobs:
                               height = dp(44)
                           }
                           setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               commit(em)
                           }
                       }
@@ -900,13 +1471,13 @@ jobs:
                       layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46))
                   }
                   bot.addView(createKey("ABC", 1.5f, theme, isSpecial = true).apply {
-                      setOnClickListener { currentMode = ViewMode.LETTERS; renderKeyboard() }
+                      setOnClickListener { triggerHaptic(); currentMode = ViewMode.LETTERS; renderKeyboard() }
                   })
                   bot.addView(createKey("😊 Emojilar", 3f, theme, isSpecial = true, isAccent = true).apply {
                       setOnClickListener {}
                   })
                   bot.addView(createKey("⌫", 1.5f, theme, isSpecial = true).apply {
-                      setOnClickListener { deleteChar() }
+                      setOnClickListener { triggerHaptic(); deleteChar() }
                   })
                   container.addView(bot)
               }
@@ -923,7 +1494,7 @@ jobs:
                       return Button(this).apply {
                           text = title
                           isAllCaps = false
-                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                           setTextColor(KbConfig.safeColor(theme.keyText))
                           background = GradientDrawable().apply {
                               cornerRadius = dp(22).toFloat()
@@ -935,22 +1506,34 @@ jobs:
                               setMargins(dp(5), dp(5), dp(5), dp(5))
                           }
                           setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               onClick()
                           }
                       }
                   }
 
-                  grid.addView(menuTile("😊  Emoji") { currentMode = ViewMode.EMOJI; renderKeyboard() })
+                  val hapticStatus = if (prefs.getBoolean(KbConfig.KEY_HAPTIC_ENABLED, true)) "ON" else "OFF"
+                  val spellStatus = if (prefs.getBoolean(KbConfig.KEY_SPELL_CHECK, true)) "ON" else "OFF"
+
+                  grid.addView(menuTile("📳  Vibratsiya: $hapticStatus") {
+                      val next = !prefs.getBoolean(KbConfig.KEY_HAPTIC_ENABLED, true)
+                      prefs.edit().putBoolean(KbConfig.KEY_HAPTIC_ENABLED, next).apply()
+                      renderKeyboard()
+                  })
+                  grid.addView(menuTile("✨  Imlo tekshiruvi: $spellStatus") {
+                      val next = !prefs.getBoolean(KbConfig.KEY_SPELL_CHECK, true)
+                      prefs.edit().putBoolean(KbConfig.KEY_SPELL_CHECK, next).apply()
+                      currentMode = ViewMode.LETTERS
+                      renderKeyboard()
+                  })
                   grid.addView(menuTile("🎨  Mavzu (Tema)") { currentMode = ViewMode.THEME_PICKER; renderKeyboard() })
                   grid.addView(menuTile("⌨️  Maket tanlash") { currentMode = ViewMode.LAYOUT_PICKER; renderKeyboard() })
-                  grid.addView(menuTile("🔢  Kalkulyator / 123") { currentMode = ViewMode.NUMPAD; renderKeyboard() })
                   grid.addView(menuTile("📱  Bir qoʻlli rejim") {
                       oneHandedMode = (oneHandedMode + 1) % 3
                       currentMode = ViewMode.LETTERS
                       renderKeyboard()
                   })
-                  grid.addView(menuTile("⚙️  Sozlamalar") {
+                  grid.addView(menuTile("⚙️  Barcha Sozlamalar") {
                       try {
                           val intent = Intent(this, SetupActivity::class.java).apply {
                               addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -981,10 +1564,11 @@ jobs:
                               setColor(KbConfig.safeColor(t.boardBg))
                               setStroke(dp(2), KbConfig.safeColor(t.accentBg))
                           }
-                          layoutParams = LinearLayout.LayoutParams(dp(120), dp(115)).apply {
+                          layoutParams = LinearLayout.LayoutParams(dp(125), dp(115)).apply {
                               rightMargin = dp(10)
                           }
                           setOnClickListener {
+                              triggerHaptic()
                               prefs.edit().putString(KbConfig.KEY_THEME, t.id).apply()
                               currentMode = ViewMode.LETTERS
                               renderKeyboard()
@@ -1022,6 +1606,7 @@ jobs:
                               bottomMargin = dp(6)
                           }
                           setOnClickListener {
+                              triggerHaptic()
                               prefs.edit().putString(KbConfig.KEY_LAYOUT, id).apply()
                               currentMode = ViewMode.LETTERS
                               renderKeyboard()
@@ -1055,7 +1640,7 @@ jobs:
 
                   row.addView(createKey("?123", 1.4f, theme, isSpecial = true).apply {
                       setOnClickListener {
-                          it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                          triggerHaptic()
                           currentMode = ViewMode.SYM1
                           renderKeyboard()
                       }
@@ -1064,7 +1649,7 @@ jobs:
                   if (showComma) {
                       row.addView(createKey(",", 0.9f, theme, isSpecial = true).apply {
                           setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               commit(",")
                           }
                       })
@@ -1073,7 +1658,7 @@ jobs:
                   if (showEmoji) {
                       row.addView(createKey("😊", 1.0f, theme, isSpecial = true).apply {
                           setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               currentMode = ViewMode.EMOJI
                               renderKeyboard()
                           }
@@ -1081,7 +1666,7 @@ jobs:
                   } else if (showLang) {
                       row.addView(createKey("🌐", 1.0f, theme, isSpecial = true).apply {
                           setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               cycleLayout()
                           }
                       })
@@ -1089,7 +1674,7 @@ jobs:
 
                   val spaceBtn = createKey(getShortLayoutLabel(), spaceWeight, theme, isSpecial = false)
                   spaceBtn.setOnClickListener {
-                      it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                      triggerHaptic()
                       val now = System.currentTimeMillis()
                       if (now - lastSpaceTime < 300L) {
                           currentInputConnection?.deleteSurroundingText(1, 0)
@@ -1097,12 +1682,12 @@ jobs:
                           shiftState = 1
                           renderKeyboard()
                       } else {
-                          commit(" ")
+                          handleSpaceWithAutoCorrect()
                       }
                       lastSpaceTime = now
                   }
                   spaceBtn.setOnLongClickListener {
-                      it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                      triggerHaptic(isLongPress = true)
                       cycleLayout()
                       true
                   }
@@ -1111,11 +1696,11 @@ jobs:
                   if (showPeriod) {
                       row.addView(createKey(".", 0.9f, theme, isSpecial = true).apply {
                           setOnClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                              triggerHaptic()
                               commit(".")
                           }
                           setOnLongClickListener {
-                              it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                              triggerHaptic(isLongPress = true)
                               commit("?")
                               true
                           }
@@ -1124,12 +1709,36 @@ jobs:
 
                   row.addView(createKey("↵", 1.4f, theme, isSpecial = true, isAccent = true).apply {
                       setOnClickListener {
-                          it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                          triggerHaptic()
                           sendEnter()
                       }
                   })
 
                   return row
+              }
+
+              // Bo'shliq bosilganda agar avto-to'g'rilash yoqilgan bo'lsa, xato so'zni avtomatik tuzatish
+              private fun handleSpaceWithAutoCorrect() {
+                  val autoCorrect = prefs.getBoolean(KbConfig.KEY_AUTO_CORRECT, true)
+                  if (autoCorrect) {
+                      val curWord = getCurrentWordBeforeCursor()
+                      if (curWord.isNotEmpty()) {
+                          val lower = curWord.lowercase()
+                          val directFix = UzbekDictionary.DIRECT_FIXES[lower]
+                          val orthoFix = UzbekDictionary.convertToNewOrthography(curWord)
+                          if (directFix != null) {
+                              val fixed = if (curWord[0].isUpperCase()) {
+                                  directFix.replaceFirstChar { it.uppercase() }
+                              } else directFix
+                              replaceCurrentWordWith(fixed)
+                              return
+                          } else if (orthoFix != curWord) {
+                              replaceCurrentWordWith(orthoFix)
+                              return
+                          }
+                      }
+                  }
+                  commit(" ")
               }
 
               private fun cycleLayout() {
@@ -1215,6 +1824,7 @@ jobs:
 
               private fun commit(text: String) {
                   currentInputConnection?.commitText(text, 1)
+                  updateSuggestionsBar()
               }
 
               private fun deleteChar() {
@@ -1225,6 +1835,7 @@ jobs:
                   } else {
                       ic.commitText("", 1)
                   }
+                  updateSuggestionsBar()
               }
 
               private fun sendEnter() {
@@ -1254,24 +1865,26 @@ jobs:
           <input-method xmlns:android="http://schemas.android.com/apk/res/android"
               android:settingsActivity="com.alharitm.uzbekfkeyboard.SetupActivity">
               <subtype
-                  android:label="Oʻzbek F / QWERTY (Pro v2.1)"
+                  android:label="Oʻzbek F / QWERTY (Pro v3.0)"
                   android:imeSubtypeLocale="uz_UZ"
                   android:imeSubtypeMode="keyboard" />
           </input-method>
           EOF
 
-          # AndroidManifest.xml yaratish
+          # AndroidManifest.xml (Rasmiy ic_launcher ikonasi bilan)
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.VIBRATE" />
               <application
                   android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher_round"
                   android:label="Oʻzbek F-Klaviatura Pro">
                   <activity
                       android:name=".SetupActivity"
                       android:exported="true"
-                      android:label="Oʻzbek F-Klaviatura Sozlamalari">
+                      android:label="Oʻzbek F-Klaviatura Pro">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
@@ -1321,8 +1934,19 @@ jobs:
           }
           EOF
 
-      - name: 5. App build.gradle yaratish va APK yig'ish
+      - name: 5. Keystore imzo kaliti yaratish va Play Store Release APK + AAB yig'ish
         run: |
+          # Google Play va Android telefonlar "virus/noma'lum" deb ogohlantirmasligi uchun rasmiy Release Keystore yaratamiz
+          keytool -genkeypair -v \
+            -keystore release-key.jks \
+            -alias alharitm_key \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass Alharitm2026! \
+            -keypass Alharitm2026! \
+            -dname "CN=Alharitm.com, OU=Mobile, O=Alharitm, L=Tashkent, ST=Tashkent, C=UZ"
+
           cat << 'EOF' > app/build.gradle
           plugins {
               id 'com.android.application'
@@ -1335,8 +1959,26 @@ jobs:
                   applicationId "com.alharitm.uzbekfkeyboard"
                   minSdk 23
                   targetSdk 34
-                  versionCode 3
-                  versionName "2.1"
+                  versionCode 4
+                  versionName "3.0"
+              }
+              signingConfigs {
+                  release {
+                      storeFile file("../release-key.jks")
+                      storePassword "Alharitm2026!"
+                      keyAlias "alharitm_key"
+                      keyPassword "Alharitm2026!"
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                      minifyEnabled false
+                      shrinkResources false
+                  }
+                  debug {
+                      signingConfig signingConfigs.release
+                  }
               }
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_17
@@ -1348,10 +1990,18 @@ jobs:
           }
           EOF
 
-          gradle assembleDebug --stacktrace
+          gradle assembleRelease bundleRelease --stacktrace
 
-      - name: 6. Tayyor APK faylni yuklab olish uchun chiqarish
+      - name: 6. Telefonga o'rnatish uchun Signed Release APK yuklash
         uses: actions/upload-artifact@v4
         with:
-          name: Alharitm-Uzbek-F-Keyboard-Pro-v2.1-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: Alharitm-Uzbek-F-Pro-v3.0-Release-APK
+          path: app/build/outputs/apk/release/app-release.apk
+
+      - name: 7. Google Play Store uchun rasmiy AAB va Keystore yuklash
+        uses: actions/upload-artifact@v4
+        with:
+          name: Google-Play-Store-Bundle-AAB-and-Keystore
+          path: |
+            app/build/outputs/bundle/release/app-release.aab
+            release-key.jks
