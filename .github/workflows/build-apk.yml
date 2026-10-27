@@ -19,20 +19,17 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 3. Android SDK va Gradle sozlash
-        uses: android-actions/setup-android@v3
-
-      - name: 4. Gradle 8.5 o'rnatish
+      - name: 3. Gradle 8.5 o'rnatish
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.5'
 
-      - name: 5. Loyiha strukturasini avtomatik tayyorlash va APK yig'ish
+      - name: 4. Loyiha strukturasini avtomatik tayyorlash va APK yig'ish
         run: |
           mkdir -p app/src/main/java/com/alharitm/uzbekfkeyboard
           mkdir -p app/src/main/res/xml
 
-          # Kotlin faylni to'liq importlari bilan yaratish
+          # UzbekFKeyboardService.kt yaratish
           cat << 'EOF' > app/src/main/java/com/alharitm/uzbekfkeyboard/UzbekFKeyboardService.kt
           package com.alharitm.uzbekfkeyboard
 
@@ -57,7 +54,6 @@ jobs:
           class SetupActivity : Activity() {
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
-
                   val root = LinearLayout(this).apply {
                       orientation = LinearLayout.VERTICAL
                       setBackgroundColor(Color.parseColor("#06080F"))
@@ -65,7 +61,6 @@ jobs:
                       val pad = (24 * resources.displayMetrics.density).toInt()
                       setPadding(pad, pad * 2, pad, pad)
                   }
-
                   val title = Button(this).apply {
                       text = "OʻZBEK F-KLAVIATURASI (v1.0)\nAlharitm.com"
                       isAllCaps = false
@@ -74,18 +69,14 @@ jobs:
                       setTextColor(Color.parseColor("#38BDF8"))
                       setBackgroundColor(Color.TRANSPARENT)
                   }
-
                   val step1Btn = Button(this).apply {
                       text = "1-QADAM: Tizim sozlamalaridan yoqish ⚙️"
                       isAllCaps = false
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
                       setTextColor(Color.WHITE)
                       setBackgroundColor(Color.parseColor("#0284C7"))
-                      setOnClickListener {
-                          startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
-                      }
+                      setOnClickListener { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
                   }
-
                   val step2Btn = Button(this).apply {
                       text = "2-QADAM: Oʻzbek F klaviaturasini tanlash ⌨️"
                       isAllCaps = false
@@ -97,7 +88,6 @@ jobs:
                           imm.showInputMethodPicker()
                       }
                   }
-
                   val lp = LinearLayout.LayoutParams(
                       ViewGroup.LayoutParams.MATCH_PARENT,
                       ViewGroup.LayoutParams.WRAP_CONTENT
@@ -111,7 +101,6 @@ jobs:
           }
 
           class UzbekFKeyboardService : InputMethodService() {
-
               private var isShifted = false
               private var isSymbolsMode = false
               private var lastSpaceTime: Long = 0
@@ -190,7 +179,6 @@ jobs:
                                   true
                               }
                           }
-
                           rowLayout.addView(btn)
                       }
                       rootLayout.addView(rowLayout)
@@ -382,7 +370,8 @@ jobs:
           }
           EOF
 
-          # App build.gradle yaratish
+      - name: 5. App build.gradle yaratish va APK yig'ish
+        run: |
           cat << 'EOF' > app/build.gradle
           plugins {
               id 'com.android.application'
