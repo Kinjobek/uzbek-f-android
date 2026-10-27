@@ -1,4 +1,4 @@
-name: Build Uzbek-F Android APK (Pro v2.0)
+name: Build Uzbek-F Android APK (Pro v2.1 - Crash Fixed)
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
           mkdir -p app/src/main/java/com/alharitm/uzbekfkeyboard
           mkdir -p app/src/main/res/xml
 
-          # UzbekFKeyboardService.kt (SetupActivity + Preferences + Themes + Multi-Layout + Gboard UI)
+          # UzbekFKeyboardService.kt (Pro v2.1 - Barcha crash xatoliklari tuzatilgan)
           cat << 'EOF' > app/src/main/java/com/alharitm/uzbekfkeyboard/UzbekFKeyboardService.kt
           package com.alharitm.uzbekfkeyboard
 
@@ -53,6 +53,7 @@ jobs:
           import android.view.inputmethod.EditorInfo
           import android.view.inputmethod.InputMethodManager
           import android.widget.Button
+          import android.widget.EditText
           import android.widget.GridLayout
           import android.widget.HorizontalScrollView
           import android.widget.LinearLayout
@@ -132,6 +133,15 @@ jobs:
                       )
                   }
               }
+
+              fun safeColor(hex: String, fallback: Int = Color.BLACK): Int {
+                  return try {
+                      val clean = if (hex.startsWith("#")) hex else "#$hex"
+                      Color.parseColor(clean)
+                  } catch (_: Exception) {
+                      fallback
+                  }
+              }
           }
 
           class SetupActivity : Activity() {
@@ -143,11 +153,11 @@ jobs:
                   prefs = getSharedPreferences(KbConfig.PREFS_NAME, Context.MODE_PRIVATE)
 
                   val scroll = ScrollView(this).apply {
-                      setBackgroundColor(Color.parseColor("#F4F6FA"))
+                      setBackgroundColor(KbConfig.safeColor("#F4F6FA"))
                   }
                   contentBox = LinearLayout(this).apply {
                       orientation = LinearLayout.VERTICAL
-                      val p = dp(18)
+                      val p = dp(16)
                       setPadding(p, p, p, p * 2)
                   }
                   scroll.addView(contentBox)
@@ -161,21 +171,18 @@ jobs:
                   // Header Card
                   val headerCard = createCard("#0F172A").apply {
                       val title = TextView(this@SetupActivity).apply {
-                          text = "OʻZBEK F-KLAVIATURASI PRO (v2.0)"
-                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
+                          text = "OʻZBEK F-KLAVIATURASI PRO (v2.1)"
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
                           typeface = Typeface.DEFAULT_BOLD
-                          setTextColor(Color.parseColor("#38BDF8"))
+                          setTextColor(KbConfig.safeColor("#38BDF8"))
                       }
                       val sub = TextView(this@SetupActivity).apply {
                           text = "Alharitm.com • Gboard uslubidagi koʻp maketli va mavzuli tizim klaviaturasi"
                           setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-                          setTextColor(Color.parseColor("#CBD5E1"))
-                          setPadding(0, dp(4), 0, dp(14))
+                          setTextColor(KbConfig.safeColor("#CBD5E1"))
+                          setPadding(0, dp(4), 0, dp(12))
                       }
 
-                      val btnRow = LinearLayout(this@SetupActivity).apply {
-                          orientation = LinearLayout.VERTICAL
-                      }
                       val step1 = Button(this@SetupActivity).apply {
                           text = "1-QADAM: Tizim sozlamalaridan yoqish ⚙️"
                           isAllCaps = false
@@ -196,11 +203,25 @@ jobs:
                               imm.showInputMethodPicker()
                           }
                       }
-                      btnRow.addView(step1)
-                      btnRow.addView(step2)
+
+                      val testInput = EditText(this@SetupActivity).apply {
+                          hint = "✍️ Klaviaturani shu yerda yozib sinab koʻring..."
+                          setHintTextColor(KbConfig.safeColor("#94A3B8"))
+                          setTextColor(Color.WHITE)
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                          background = roundRect("#1E293B", dp(10))
+                          val pad = dp(12)
+                          setPadding(pad, pad, pad, pad)
+                          val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                          lp.topMargin = dp(10)
+                          layoutParams = lp
+                      }
+
                       addView(title)
                       addView(sub)
-                      addView(btnRow)
+                      addView(step1)
+                      addView(step2)
+                      addView(testInput)
                   }
                   contentBox.addView(headerCard)
 
@@ -216,8 +237,8 @@ jobs:
                           isAllCaps = false
                           gravity = Gravity.START or Gravity.CENTER_VERTICAL
                           setPadding(dp(14), dp(10), dp(14), dp(10))
-                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-                          setTextColor(if (isSelected) Color.parseColor("#0B57D0") else Color.parseColor("#1E293B"))
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                          setTextColor(KbConfig.safeColor(if (isSelected) "#0B57D0" else "#1E293B"))
                           background = roundRect(if (isSelected) "#E8F0FE" else "#F8FAFC", dp(12))
                           val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
                           lp.bottomMargin = dp(8)
@@ -271,11 +292,11 @@ jobs:
                       text = "Shrift oʻlchami (Font size): $scaleVal%"
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
                       typeface = Typeface.DEFAULT_BOLD
-                      setTextColor(Color.parseColor("#0F172A"))
+                      setTextColor(KbConfig.safeColor("#0F172A"))
                       setPadding(0, dp(10), 0, dp(6))
                   }
                   val seek = SeekBar(this).apply {
-                      max = 50 // 80% to 130%
+                      max = 50
                       progress = (scaleVal - 80).coerceIn(0, 50)
                       setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                           override fun onProgressChanged(sb: SeekBar?, p: Int, fromUser: Boolean) {
@@ -291,7 +312,7 @@ jobs:
                   prefCard.addView(seek)
                   contentBox.addView(prefCard)
 
-                  // Section 3: Theme Grid (Gboard Style Color Cards)
+                  // Section 3: Theme Grid
                   contentBox.addView(sectionHeader("Mavzular va Ranglar (Themes)"))
                   val themeCard = createCard("#FFFFFF")
                   val activeTheme = prefs.getString(KbConfig.KEY_THEME, "default_dark") ?: "default_dark"
@@ -299,6 +320,9 @@ jobs:
                   val grid = GridLayout(this).apply {
                       columnCount = 3
                   }
+
+                  val screenW = resources.displayMetrics.widthPixels.coerceAtLeast(320)
+                  val cardW = ((screenW - dp(88)) / 3).coerceAtLeast(dp(76))
 
                   for (theme in KbConfig.THEMES) {
                       val isSelected = (theme.id == activeTheme)
@@ -308,14 +332,14 @@ jobs:
                           val p = dp(6)
                           setPadding(p, p, p, p)
                           layoutParams = GridLayout.LayoutParams().apply {
-                              width = (resources.displayMetrics.widthPixels - dp(88)) / 3
-                              height = dp(86)
+                              width = cardW
+                              height = dp(82)
                               setMargins(dp(4), dp(4), dp(4), dp(4))
                           }
                           background = GradientDrawable().apply {
                               cornerRadius = dp(14).toFloat()
-                              setColor(Color.parseColor(theme.boardBg))
-                              setStroke(dp(if (isSelected) 3 else 1), Color.parseColor(if (isSelected) "#0B57D0" else "#CBD5E1"))
+                              setColor(KbConfig.safeColor(theme.boardBg))
+                              setStroke(dp(if (isSelected) 3 else 1), KbConfig.safeColor(if (isSelected) "#0B57D0" else "#CBD5E1"))
                           }
                           setOnClickListener {
                               prefs.edit().putString(KbConfig.KEY_THEME, theme.id).apply()
@@ -328,7 +352,7 @@ jobs:
                           setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
                           typeface = Typeface.DEFAULT_BOLD
                           gravity = Gravity.CENTER
-                          setTextColor(Color.parseColor(theme.keyText))
+                          setTextColor(KbConfig.safeColor(theme.keyText))
                       }
 
                       val miniBar = LinearLayout(this).apply {
@@ -338,11 +362,11 @@ jobs:
                       }
                       val spaceMock = View(this).apply {
                           background = roundRect(theme.keyBg, dp(4))
-                          layoutParams = LinearLayout.LayoutParams(dp(44), dp(10)).apply { rightMargin = dp(6) }
+                          layoutParams = LinearLayout.LayoutParams(dp(40), dp(9)).apply { rightMargin = dp(5) }
                       }
                       val enterMock = View(this).apply {
                           background = roundRect(theme.accentBg, dp(5))
-                          layoutParams = LinearLayout.LayoutParams(dp(16), dp(10))
+                          layoutParams = LinearLayout.LayoutParams(dp(14), dp(9))
                       }
                       miniBar.addView(spaceMock)
                       miniBar.addView(enterMock)
@@ -360,7 +384,7 @@ jobs:
                       text = title
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
                       typeface = Typeface.DEFAULT_BOLD
-                      setTextColor(Color.parseColor("#3B5998"))
+                      setTextColor(KbConfig.safeColor("#3B5998"))
                       setPadding(dp(4), dp(16), dp(4), dp(8))
                   }
               }
@@ -368,9 +392,9 @@ jobs:
               private fun createCard(bgHex: String): LinearLayout {
                   return LinearLayout(this).apply {
                       orientation = LinearLayout.VERTICAL
-                      val p = dp(16)
+                      val p = dp(14)
                       setPadding(p, p, p, p)
-                      background = roundRect(bgHex, dp(18))
+                      background = roundRect(bgHex, dp(16))
                   }
               }
 
@@ -386,14 +410,14 @@ jobs:
                   }
                   val tView = TextView(this).apply {
                       text = title
-                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
                       typeface = Typeface.DEFAULT_BOLD
-                      setTextColor(Color.parseColor("#0F172A"))
+                      setTextColor(KbConfig.safeColor("#0F172A"))
                   }
                   val sView = TextView(this).apply {
                       text = subtitle
-                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-                      setTextColor(Color.parseColor("#64748B"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                      setTextColor(KbConfig.safeColor("#64748B"))
                   }
                   textCol.addView(tView)
                   textCol.addView(sView)
@@ -410,7 +434,7 @@ jobs:
               private fun roundRect(hex: String, radiusPx: Int): GradientDrawable {
                   return GradientDrawable().apply {
                       cornerRadius = radiusPx.toFloat()
-                      setColor(Color.parseColor(hex))
+                      setColor(KbConfig.safeColor(hex))
                   }
               }
 
@@ -428,7 +452,7 @@ jobs:
               private var oneHandedMode = 0 // 0=normal, 1=left, 2=right
               private var lastSpaceTime = 0L
               private var lastShiftTime = 0L
-              private lateinit var rootContainer: LinearLayout
+              private var rootContainer: LinearLayout? = null
               private lateinit var prefs: SharedPreferences
 
               private val longPressMap = mapOf(
@@ -464,39 +488,49 @@ jobs:
               }
 
               override fun onCreateInputView(): View {
-                  rootContainer = LinearLayout(this).apply {
+                  val container = LinearLayout(this).apply {
                       orientation = LinearLayout.VERTICAL
                       layoutParams = ViewGroup.LayoutParams(
                           ViewGroup.LayoutParams.MATCH_PARENT,
                           ViewGroup.LayoutParams.WRAP_CONTENT
                       )
                   }
+                  rootContainer = container
                   renderKeyboard()
-                  return rootContainer
+                  return container
               }
 
               override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
                   super.onStartInputView(info, restarting)
                   currentMode = ViewMode.LETTERS
-                  renderKeyboard()
+                  if (rootContainer != null) {
+                      renderKeyboard()
+                  }
               }
 
               private fun getActiveTheme(): KbTheme {
+                  if (!::prefs.isInitialized) {
+                      prefs = getSharedPreferences(KbConfig.PREFS_NAME, Context.MODE_PRIVATE)
+                  }
                   val id = prefs.getString(KbConfig.KEY_THEME, "default_dark") ?: "default_dark"
                   return KbConfig.THEMES.find { it.id == id } ?: KbConfig.THEMES.first()
               }
 
               private fun getActiveLayoutId(): String {
+                  if (!::prefs.isInitialized) {
+                      prefs = getSharedPreferences(KbConfig.PREFS_NAME, Context.MODE_PRIVATE)
+                  }
                   return prefs.getString(KbConfig.KEY_LAYOUT, "f_v1_0") ?: "f_v1_0"
               }
 
               private fun renderKeyboard() {
-                  rootContainer.removeAllViews()
+                  val container = rootContainer ?: return
+                  container.removeAllViews()
                   val theme = getActiveTheme()
-                  rootContainer.setBackgroundColor(Color.parseColor(theme.boardBg))
+                  container.setBackgroundColor(KbConfig.safeColor(theme.boardBg))
 
                   val padH = if (oneHandedMode == 0) dp(4) else dp(42)
-                  rootContainer.setPadding(
+                  container.setPadding(
                       if (oneHandedMode == 2) padH else dp(4),
                       dp(4),
                       if (oneHandedMode == 1) padH else dp(4),
@@ -504,18 +538,18 @@ jobs:
                   )
 
                   // 1. Gboard Top Toolbar Strip
-                  rootContainer.addView(buildTopToolbar(theme))
+                  container.addView(buildTopToolbar(theme))
 
-                  // 2. Main Body View depending on ViewMode
+                  // 2. Main Body View
                   when (currentMode) {
-                      ViewMode.LETTERS -> buildLettersView(theme)
-                      ViewMode.SYM1 -> buildSymbolsView(theme, isSecondary = false)
-                      ViewMode.SYM2 -> buildSymbolsView(theme, isSecondary = true)
-                      ViewMode.NUMPAD -> buildNumpadView(theme)
-                      ViewMode.EMOJI -> buildEmojiView(theme)
-                      ViewMode.QUICK_MENU -> buildQuickMenuView(theme)
-                      ViewMode.THEME_PICKER -> buildThemePickerView(theme)
-                      ViewMode.LAYOUT_PICKER -> buildLayoutPickerView(theme)
+                      ViewMode.LETTERS -> buildLettersView(container, theme)
+                      ViewMode.SYM1 -> buildSymbolsView(container, theme, isSecondary = false)
+                      ViewMode.SYM2 -> buildSymbolsView(container, theme, isSecondary = true)
+                      ViewMode.NUMPAD -> buildNumpadView(container, theme)
+                      ViewMode.EMOJI -> buildEmojiView(container, theme)
+                      ViewMode.QUICK_MENU -> buildQuickMenuView(container, theme)
+                      ViewMode.THEME_PICKER -> buildThemePickerView(container, theme)
+                      ViewMode.LAYOUT_PICKER -> buildLayoutPickerView(container, theme)
                   }
               }
 
@@ -535,11 +569,11 @@ jobs:
                           text = icon
                           isAllCaps = false
                           setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-                          setTextColor(Color.parseColor(if (active) theme.boardBg else theme.keyText))
+                          setTextColor(KbConfig.safeColor(if (active) theme.boardBg else theme.keyText))
                           setPadding(0, 0, 0, 0)
                           background = GradientDrawable().apply {
                               cornerRadius = dp(18).toFloat()
-                              setColor(Color.parseColor(if (active) theme.accentBg else "00000000"))
+                              setColor(if (active) KbConfig.safeColor(theme.accentBg) else Color.TRANSPARENT)
                           }
                           layoutParams = LinearLayout.LayoutParams(0, dp(34), 1f).apply {
                               setMargins(dp(3), 0, dp(3), 0)
@@ -570,20 +604,21 @@ jobs:
                       renderKeyboard()
                   })
                   bar.addView(toolBtn("⚙️") {
-                      val intent = Intent(this, SetupActivity::class.java).apply {
-                          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                      }
-                      startActivity(intent)
+                      try {
+                          val intent = Intent(this, SetupActivity::class.java).apply {
+                              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                          }
+                          startActivity(intent)
+                      } catch (_: Exception) {}
                   })
 
                   return bar
               }
 
-              private fun buildLettersView(theme: KbTheme) {
+              private fun buildLettersView(container: LinearLayout, theme: KbTheme) {
                   val layoutId = getActiveLayoutId()
                   val showNumRow = prefs.getBoolean(KbConfig.KEY_NUM_ROW, true)
 
-                  // Optional Top Number Row (1 2 3 4 5 6 7 8 9 0)
                   if (showNumRow) {
                       val numRow = LinearLayout(this).apply {
                           orientation = LinearLayout.HORIZONTAL
@@ -601,12 +636,11 @@ jobs:
                           }
                           numRow.addView(btn)
                       }
-                      rootContainer.addView(numRow)
+                      container.addView(numRow)
                   }
 
                   val rows = KbConfig.getLayoutRows(layoutId)
 
-                  // Row 1 & Row 2
                   for (rIdx in 0..1) {
                       val rKeys = rows[rIdx]
                       val rowLayout = LinearLayout(this).apply {
@@ -638,10 +672,9 @@ jobs:
                           }
                           rowLayout.addView(btn)
                       }
-                      rootContainer.addView(rowLayout)
+                      container.addView(rowLayout)
                   }
 
-                  // Row 3: Shift + Bottom Letters + Backspace
                   val r3Keys = rows[2]
                   val row3Layout = LinearLayout(this).apply {
                       orientation = LinearLayout.HORIZONTAL
@@ -663,9 +696,7 @@ jobs:
                       val now = System.currentTimeMillis()
                       shiftState = if (now - lastShiftTime < 320L) {
                           2
-                      } else if (shiftState == 2) {
-                          0
-                      } else if (shiftState == 1) {
+                      } else if (shiftState == 2 || shiftState == 1) {
                           0
                       } else {
                           1
@@ -708,13 +739,12 @@ jobs:
                       true
                   }
                   row3Layout.addView(delBtn)
-                  rootContainer.addView(row3Layout)
+                  container.addView(row3Layout)
 
-                  // Row 4: Gboard Bottom Bar (?123, Comma, Emoji/Globe, Spacebar, Period, Enter)
-                  rootContainer.addView(buildBottomActionRow(theme, isSymbols = false))
+                  container.addView(buildBottomActionRow(theme))
               }
 
-              private fun buildSymbolsView(theme: KbTheme, isSecondary: Boolean) {
+              private fun buildSymbolsView(container: LinearLayout, theme: KbTheme, isSecondary: Boolean) {
                   val rows = if (isSecondary) sym2Rows else sym1Rows
 
                   for (rIdx in 0..2) {
@@ -744,10 +774,9 @@ jobs:
                           }
                           rowLayout.addView(btn)
                       }
-                      rootContainer.addView(rowLayout)
+                      container.addView(rowLayout)
                   }
 
-                  // Bottom Row for Symbols (ABC, <, 1234 Numpad, Space, >, Enter)
                   val botRow = LinearLayout(this).apply {
                       orientation = LinearLayout.HORIZONTAL
                       weightSum = 10f
@@ -763,10 +792,10 @@ jobs:
                   botRow.addView(createKey(if (isSecondary) "<" else ",", 1f, theme, isSpecial = true).apply {
                       setOnClickListener { commit(if (isSecondary) "<" else ",") }
                   })
-                  botRow.addView(createKey("12\n34", 1.1f, theme, isSpecial = true).apply {
+                  botRow.addView(createKey("1234", 1.2f, theme, isSpecial = true).apply {
                       setOnClickListener { currentMode = ViewMode.NUMPAD; renderKeyboard() }
                   })
-                  botRow.addView(createKey(getShortLayoutLabel(), 3.9f, theme, isSpecial = false).apply {
+                  botRow.addView(createKey(getShortLayoutLabel(), 3.8f, theme, isSpecial = false).apply {
                       setOnClickListener { commit(" ") }
                   })
                   botRow.addView(createKey(if (isSecondary) ">" else ".", 1f, theme, isSpecial = true).apply {
@@ -775,10 +804,10 @@ jobs:
                   botRow.addView(createKey("↵", 1.5f, theme, isSpecial = true, isAccent = true).apply {
                       setOnClickListener { sendEnter() }
                   })
-                  rootContainer.addView(botRow)
+                  container.addView(botRow)
               }
 
-              private fun buildNumpadView(theme: KbTheme) {
+              private fun buildNumpadView(container: LinearLayout, theme: KbTheme) {
                   val numRows = listOf(
                       listOf("+", "1", "2", "3", "%"),
                       listOf("-", "4", "5", "6", "␣"),
@@ -807,7 +836,7 @@ jobs:
                           }
                           rowLayout.addView(btn)
                       }
-                      rootContainer.addView(rowLayout)
+                      container.addView(rowLayout)
                   }
 
                   val bot = LinearLayout(this).apply {
@@ -833,17 +862,18 @@ jobs:
                   bot.addView(createKey("↵", 1f, theme, isSpecial = true, isAccent = true).apply {
                       setOnClickListener { sendEnter() }
                   })
-                  rootContainer.addView(bot)
+                  container.addView(bot)
               }
 
-              private fun buildEmojiView(theme: KbTheme) {
+              private fun buildEmojiView(container: LinearLayout, theme: KbTheme) {
                   val scroll = ScrollView(this).apply {
                       layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(192))
                   }
                   val grid = GridLayout(this).apply {
                       columnCount = 8
                   }
-                  val cellW = (resources.displayMetrics.widthPixels - dp(24)) / 8
+                  val screenW = resources.displayMetrics.widthPixels.coerceAtLeast(320)
+                  val cellW = (screenW - dp(24)) / 8
                   for (em in emojiList) {
                       val b = Button(this).apply {
                           text = em
@@ -862,7 +892,7 @@ jobs:
                       grid.addView(b)
                   }
                   scroll.addView(grid)
-                  rootContainer.addView(scroll)
+                  container.addView(scroll)
 
                   val bot = LinearLayout(this).apply {
                       orientation = LinearLayout.HORIZONTAL
@@ -878,25 +908,26 @@ jobs:
                   bot.addView(createKey("⌫", 1.5f, theme, isSpecial = true).apply {
                       setOnClickListener { deleteChar() }
                   })
-                  rootContainer.addView(bot)
+                  container.addView(bot)
               }
 
-              private fun buildQuickMenuView(theme: KbTheme) {
+              private fun buildQuickMenuView(container: LinearLayout, theme: KbTheme) {
                   val grid = GridLayout(this).apply {
                       columnCount = 2
                       layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(190))
                   }
-                  val cardW = (resources.displayMetrics.widthPixels - dp(36)) / 2
+                  val screenW = resources.displayMetrics.widthPixels.coerceAtLeast(320)
+                  val cardW = (screenW - dp(36)) / 2
 
                   fun menuTile(title: String, onClick: () -> Unit): View {
                       return Button(this).apply {
                           text = title
                           isAllCaps = false
                           setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-                          setTextColor(Color.parseColor(theme.keyText))
+                          setTextColor(KbConfig.safeColor(theme.keyText))
                           background = GradientDrawable().apply {
                               cornerRadius = dp(22).toFloat()
-                              setColor(Color.parseColor(theme.keyBg))
+                              setColor(KbConfig.safeColor(theme.keyBg))
                           }
                           layoutParams = GridLayout.LayoutParams().apply {
                               width = cardW
@@ -920,16 +951,18 @@ jobs:
                       renderKeyboard()
                   })
                   grid.addView(menuTile("⚙️  Sozlamalar") {
-                      val intent = Intent(this, SetupActivity::class.java).apply {
-                          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                      }
-                      startActivity(intent)
+                      try {
+                          val intent = Intent(this, SetupActivity::class.java).apply {
+                              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                          }
+                          startActivity(intent)
+                      } catch (_: Exception) {}
                   })
 
-                  rootContainer.addView(grid)
+                  container.addView(grid)
               }
 
-              private fun buildThemePickerView(theme: KbTheme) {
+              private fun buildThemePickerView(container: LinearLayout, theme: KbTheme) {
                   val hScroll = HorizontalScrollView(this).apply {
                       layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(150))
                   }
@@ -942,11 +975,11 @@ jobs:
                           text = t.name
                           isAllCaps = false
                           setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-                          setTextColor(Color.parseColor(t.keyText))
+                          setTextColor(KbConfig.safeColor(t.keyText))
                           background = GradientDrawable().apply {
                               cornerRadius = dp(16).toFloat()
-                              setColor(Color.parseColor(t.boardBg))
-                              setStroke(dp(2), Color.parseColor(t.accentBg))
+                              setColor(KbConfig.safeColor(t.boardBg))
+                              setStroke(dp(2), KbConfig.safeColor(t.accentBg))
                           }
                           layoutParams = LinearLayout.LayoutParams(dp(120), dp(115)).apply {
                               rightMargin = dp(10)
@@ -960,10 +993,10 @@ jobs:
                       row.addView(card)
                   }
                   hScroll.addView(row)
-                  rootContainer.addView(hScroll)
+                  container.addView(hScroll)
               }
 
-              private fun buildLayoutPickerView(theme: KbTheme) {
+              private fun buildLayoutPickerView(container: LinearLayout, theme: KbTheme) {
                   val scroll = ScrollView(this).apply {
                       layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(190))
                   }
@@ -979,11 +1012,11 @@ jobs:
                           isAllCaps = false
                           gravity = Gravity.START or Gravity.CENTER_VERTICAL
                           setPadding(dp(16), 0, dp(16), 0)
-                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-                          setTextColor(Color.parseColor(if (isSel) theme.boardBg else theme.keyText))
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                          setTextColor(KbConfig.safeColor(if (isSel) theme.boardBg else theme.keyText))
                           background = GradientDrawable().apply {
                               cornerRadius = dp(14).toFloat()
-                              setColor(Color.parseColor(if (isSel) theme.accentBg else theme.keyBg))
+                              setColor(KbConfig.safeColor(if (isSel) theme.accentBg else theme.keyBg))
                           }
                           layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(42)).apply {
                               bottomMargin = dp(6)
@@ -997,10 +1030,10 @@ jobs:
                       col.addView(b)
                   }
                   scroll.addView(col)
-                  rootContainer.addView(scroll)
+                  container.addView(scroll)
               }
 
-              private fun buildBottomActionRow(theme: KbTheme, isSymbols: Boolean): View {
+              private fun buildBottomActionRow(theme: KbTheme): View {
                   val row = LinearLayout(this).apply {
                       orientation = LinearLayout.HORIZONTAL
                       weightSum = 10f
@@ -1020,7 +1053,6 @@ jobs:
                   if (!showPeriod) spaceWeight += 0.9f
                   if (!showEmoji && !showLang) spaceWeight += 1.0f
 
-                  // ?123 Button
                   row.addView(createKey("?123", 1.4f, theme, isSpecial = true).apply {
                       setOnClickListener {
                           it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
@@ -1055,7 +1087,6 @@ jobs:
                       })
                   }
 
-                  // Spacebar (Long-press cycles layout!)
                   val spaceBtn = createKey(getShortLayoutLabel(), spaceWeight, theme, isSpecial = false)
                   spaceBtn.setOnClickListener {
                       it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
@@ -1091,7 +1122,6 @@ jobs:
                       })
                   }
 
-                  // Enter / Search Accent Pill Button
                   row.addView(createKey("↵", 1.4f, theme, isSpecial = true, isAccent = true).apply {
                       setOnClickListener {
                           it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
@@ -1142,7 +1172,7 @@ jobs:
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, baseSp * scale)
                       typeface = Typeface.create("sans-serif-medium", if (isSpecial) Typeface.BOLD else Typeface.NORMAL)
                       setTextColor(
-                          Color.parseColor(
+                          KbConfig.safeColor(
                               if (isAccent) theme.boardBg else theme.keyText
                           )
                       )
@@ -1152,7 +1182,7 @@ jobs:
                       background = GradientDrawable().apply {
                           cornerRadius = dp(if (isAccent || label == "?123" || label == "ABC") 22 else 8).toFloat()
                           setColor(
-                              Color.parseColor(
+                              KbConfig.safeColor(
                                   when {
                                       isAccent -> theme.accentBg
                                       isSpecial -> theme.specialKeyBg
@@ -1174,11 +1204,13 @@ jobs:
               }
 
               private fun pasteFromClipboard() {
-                  val cm = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                  val text = cm?.primaryClip?.getItemAt(0)?.coerceToText(this)?.toString()
-                  if (!text.isNullOrEmpty()) {
-                      commit(text)
-                  }
+                  try {
+                      val cm = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                      val text = cm?.primaryClip?.getItemAt(0)?.coerceToText(this)?.toString()
+                      if (!text.isNullOrEmpty()) {
+                          commit(text)
+                      }
+                  } catch (_: Exception) {}
               }
 
               private fun commit(text: String) {
@@ -1222,7 +1254,7 @@ jobs:
           <input-method xmlns:android="http://schemas.android.com/apk/res/android"
               android:settingsActivity="com.alharitm.uzbekfkeyboard.SetupActivity">
               <subtype
-                  android:label="Oʻzbek F / QWERTY (Pro v2.0)"
+                  android:label="Oʻzbek F / QWERTY (Pro v2.1)"
                   android:imeSubtypeLocale="uz_UZ"
                   android:imeSubtypeMode="keyboard" />
           </input-method>
@@ -1303,8 +1335,8 @@ jobs:
                   applicationId "com.alharitm.uzbekfkeyboard"
                   minSdk 23
                   targetSdk 34
-                  versionCode 2
-                  versionName "2.0"
+                  versionCode 3
+                  versionName "2.1"
               }
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_17
@@ -1321,5 +1353,5 @@ jobs:
       - name: 6. Tayyor APK faylni yuklab olish uchun chiqarish
         uses: actions/upload-artifact@v4
         with:
-          name: Alharitm-Uzbek-F-Keyboard-Pro-APK
+          name: Alharitm-Uzbek-F-Keyboard-Pro-v2.1-APK
           path: app/build/outputs/apk/debug/app-debug.apk
