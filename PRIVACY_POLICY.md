@@ -1,11 +1,11 @@
-# Privacy Policy — Özbekça termılma v1.05
+# Privacy Policy — Özbekça terilma v1.05
 
 **Developer / Company:** ALHARITM (Sarvarbek Nazarov)  
 **Effective Date:** October 28, 2026  
 **Application Package ID:** `com.alharitm.uzbekfkeyboard`
 
 ## 1. Zero Data Collection Policy (Maʼlumotlar yigʻilmasligi)
-**Özbekça termılma** ("the Application") is a 100% offline Android Input Method (Keyboard) developed by **ALHARITM**. 
+**Özbekça terilma** ("the Application") is a 100% offline Android Input Method (Keyboard) developed by **ALHARITM**. 
 We **DO NOT** collect, store, log, transmit, or share any personal data, keystrokes, passwords, credit card numbers, contacts, clipboard items, or device identifiers.
 
 ## 2. No Internet Permission (100% Offline Operation)
