@@ -1,4 +1,4 @@
-name: Build Uzbek-F Ultimate v4.3
+name: Build Uzbek-F v1.04
 
 on:
   push:
@@ -35,6 +35,7 @@ jobs:
           mkdir -p app/src/main/res/xml
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/res/mipmap
           mkdir -p app/src/main/res/mipmap-anydpi-v26
 
           # 1. Release Keystore imza anahtarı oluştur
@@ -183,6 +184,8 @@ jobs:
           </adaptive-icon>
           EOF
 
+          cp app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml app/src/main/res/mipmap/ic_launcher.xml
+
           # 6. Strings & XML method
           cat << 'EOF' > app/src/main/res/values/strings.xml
           <?xml version="1.0" encoding="utf-8"?>
@@ -245,7 +248,7 @@ jobs:
           </manifest>
           EOF
 
-          # 8. UzbekFKeyboardService.kt (Aragon v4.3 - Tam Özellikli & Hatasız)
+          # 8. UzbekFKeyboardService.kt (Aragon v4.3 - Hatasız & Tam Özellikli)
           cat << 'EOF' > app/src/main/java/com/alharitm/uzbekfkeyboard/UzbekFKeyboardService.kt
           package com.alharitm.uzbekfkeyboard
 
@@ -280,6 +283,7 @@ jobs:
           import android.widget.PopupWindow
           import android.widget.TextView
           import android.widget.Toast
+          import kotlin.math.min
 
           data class KbTheme(
               val id: String,
@@ -402,7 +406,7 @@ jobs:
                   "ö" to listOf("o", "oʻ", "ü"),
                   "g" to listOf("ğ", "gʻ"),
                   "ğ" to listOf("g", "gʻ"),
-                  "s" to listOf("ş", "sh", "$"),
+                  "s" to listOf("ş", "sh", "\$"),
                   "ş" to listOf("s", "sh"),
                   "c" to listOf("ç", "ch"),
                   "ç" to listOf("c", "ch"),
@@ -527,9 +531,9 @@ jobs:
                       'О' to "O", 'о' to "o", 'П' to "P", 'п' to "p", 'Р' to "R", 'р' to "r",
                       'С' to "S", 'с' to "s", 'Т' to "T", 'т' to "t", 'У' to "U", 'у' to "u",
                       'Ф' to "F", 'ф' to "f", 'Х' to "X", 'х' to "x", 'Ц' to "Ts", 'ц' to "ts",
-                      'Ч' to "Ç", 'ч' to "ç", 'Ш' to "Ş", 'ш' to "ş", 'Ъ' to "ʼ", 'ъ' to "ʼ",
+                      'Ч' to "Ç", 'ç' to "ç", 'Ш' to "Ş", 'ш' to "ş", 'Ъ' to "ʼ", 'ъ' to "ʼ",
                       'Ь' to "", 'ь' to "", 'Э' to "E", 'э' to "e", 'Ю' to "Yu", 'ю' to "yu",
-                      'Я' to "Ya", 'я' to "ya", 'Ў' to "Ö", 'ў' to "ö", 'Қ' to "Q", 'қ' to "q",
+                      'Ya' to "Ya", 'я' to "ya", 'Ў' to "Ö", 'ў' to "ö", 'Қ' to "Q", 'қ' to "q",
                       'Ғ' to "Ğ", 'ғ' to "ğ", 'Ҳ' to "H", 'ҳ' to "h"
                   )
                   val sb = StringBuilder()
@@ -591,7 +595,7 @@ jobs:
                   canvas.drawRoundRect(rect, corner, corner, bgPaint)
 
                   if (isPressedDown) {
-                      val radius = minOf(w, h) * 0.24f
+                      val radius = min(w, h) * 0.24f
                       canvas.drawCircle(w / 2f, (h - dp(1.5f)) / 2f, radius, dotPaint)
                   } else {
                       if (!subHint.isNullOrEmpty()) {
@@ -768,13 +772,13 @@ jobs:
                       } else {
                           popup.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y)
                       }
-                  } catch (_: Exception) {}
+                  } catch (e: Exception) {}
               }
 
               private fun dismissKeyPreview() {
                   try {
                       keyPreviewPopup?.dismiss()
-                  } catch (_: Exception) {}
+                  } catch (e: Exception) {}
               }
 
               fun renderKeyboardUI() {
@@ -1257,20 +1261,20 @@ jobs:
                           addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                       }
                       startActivity(intent)
-                  } catch (_: Exception) {}
+                  } catch (e: Exception) {}
               }
 
               private fun buildSymbolsView1(board: LinearLayout, theme: KbTheme) {
                   val rows = listOf(
                       listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
                       listOf("@", "#", "₺", "_", "&", "-", "+", "(", ")", "/"),
-                      listOf("=\\<", "*", "\"", "'", ":", ";", "!", "?", "⌫")
+                      listOf("=/<", "*", "\"", "'", ":", ";", "!", "?", "⌫")
                   )
                   rows.forEach { r ->
                       val rowLayout = createRowLayout(dp(46))
                       r.forEach { token ->
                           when (token) {
-                              "=\\<" -> rowLayout.addView(createActionKey("=\\<", theme.specKeyBg, theme.keyText, 1.3f) {
+                              "=/<" -> rowLayout.addView(createActionKey("=/<", theme.specKeyBg, theme.keyText, 1.3f) {
                                   currentMode = ViewMode.SYMBOLS_2
                                   renderKeyboardUI()
                               })
@@ -1286,7 +1290,7 @@ jobs:
               private fun buildSymbolsView2(board: LinearLayout, theme: KbTheme) {
                   val rows = listOf(
                       listOf("~", "`", "|", "•", "√", "π", "÷", "×", "§", "Δ"),
-                      listOf("£", "€", "$", "¢", "^", "°", "=", "{", "}", "\\"),
+                      listOf("£", "€", "\$", "¢", "^", "°", "=", "{", "}", "\\"),
                       listOf("?123", "%", "©", "®", "™", "✓", "[", "]", "⌫")
                   )
                   rows.forEach { r ->
@@ -1672,7 +1676,7 @@ jobs:
                           addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                       }
                       startActivity(intent)
-                  } catch (_: Exception) {}
+                  } catch (e: Exception) {}
               }
 
               private fun updateShiftStateFromEditor() {
@@ -1695,7 +1699,7 @@ jobs:
                           @Suppress("DEPRECATION")
                           vib.vibrate(dur)
                       }
-                  } catch (_: Exception) {}
+                  } catch (e: Exception) {}
               }
 
               private fun roundedBg(hex: String, radiusDp: Float): GradientDrawable {
@@ -1715,7 +1719,7 @@ jobs:
           }
           EOF
 
-          # 9. SetupActivity.kt (import android.graphics.Color eklendi ve tüm ayarlar entegre edildi)
+          # 9. SetupActivity.kt (import android.graphics.Color ve tüm eksiksiz ayarlar)
           cat << 'EOF' > app/src/main/java/com/alharitm/uzbekfkeyboard/SetupActivity.kt
           package com.alharitm.uzbekfkeyboard
 
@@ -1839,7 +1843,7 @@ jobs:
                   fontCard.addView(sectionLabel("2. Harf Kattaligi (Standart: 130%, Maksimal: 200%)"))
                   val curFontScale = prefs.getInt(KbConfig.KEY_FONT_SCALE, 130)
                   val fontTitle = TextView(this).apply {
-                      text = "Harflar oʻlchami: $curFontScale% (Birlamchi standart: 130%)"
+                      text = "Harflar oʻlchami: ${curFontScale}% (Birlamchi standart: 130%)"
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
                       typeface = Typeface.DEFAULT_BOLD
                       setTextColor(Color.parseColor("#0F172A"))
@@ -1853,7 +1857,7 @@ jobs:
                       setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                           override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
                               val scale = 100 + p
-                              fontTitle.text = "Harflar oʻlchami: $scale% (Birlamchi standart: 130%)"
+                              fontTitle.text = "Harflar oʻlchami: ${scale}% (Birlamchi standart: 130%)"
                               prefs.edit().putInt(KbConfig.KEY_FONT_SCALE, scale).apply()
                           }
                           override fun onStartTrackingTouch(s: SeekBar?) {}
