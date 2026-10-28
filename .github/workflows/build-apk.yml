@@ -1,4 +1,4 @@
-name: Build Ozbekca Termilma v1.05 (ALHARITM - Play Store Ready)
+name: Build Ozbekca Termilma v1.05 (ALHARITM - Play Store Official)
 on:
   push:
     branches: [ "main", "master" ]
@@ -29,7 +29,8 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          rm -rf app
+          rm -rf app keystore-backup
+          mkdir -p keystore-backup
           mkdir -p app/src/main/java/com/alharitm/uzbekfkeyboard
           mkdir -p app/src/main/res/xml
           mkdir -p app/src/main/res/values
@@ -38,28 +39,38 @@ jobs:
           write_file() {
             sed 's/^[[:space:]]\{1,10\}//' > "$1"
           }
-          # 1. Keystore tekshirish va yaratish
+          # 1. Keystore tekshirish va zaxiralash
           rm -f release-key.jks
           KEYSTORE_OK=false
           if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
             echo "$KEYSTORE_BASE64" | tr -d ' \n\r\t' | base64 -d > release-key.jks || true
             if keytool -list -keystore release-key.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null 2>&1; then
               KEYSTORE_OK=true
-              echo "Doimiy ALHARITM keystore muvaffaqiyatli tasdiqlandi."
+              echo "Doimiy ALHARITM keystore Secrets'dan muvaffaqiyatli yuklandi."
             fi
           fi
           if [ "$KEYSTORE_OK" = false ]; then
-            echo "::warning::Secrets topilmadi yoki mos kelmadi. Avtomatik ALHARITM kaliti yaratilmoqda..."
+            echo "::warning::Secrets hali kiritilmagan. Yangi ALHARITM kaliti yaratilmoqda..."
             rm -f release-key.jks
-            export KEYSTORE_PASSWORD="TempKey2026x"
+            export KEYSTORE_PASSWORD="Alharitm2026ProKey"
             export KEY_ALIAS="alharitm_key"
-            export KEY_PASSWORD="TempKey2026x"
+            export KEY_PASSWORD="Alharitm2026ProKey"
             keytool -genkeypair \
               -keystore release-key.jks \
               -alias "$KEY_ALIAS" \
               -keyalg RSA -keysize 2048 -validity 10000 \
               -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" \
               -dname "CN=Sarvarbek Nazarov, OU=ALHARITM, O=ALHARITM, L=Tashkent, ST=Tashkent, C=UZ"
+            cp release-key.jks keystore-backup/alharitm-upload-key.jks
+            base64 -w 0 release-key.jks > keystore-backup/KEYSTORE_BASE64.txt
+            cat << 'KINFO' > keystore-backup/QANDAY-SAQLASH-KERAK.txt
+          USHBU KALITNI YO'QOTMANG!
+          GitHub -> Settings -> Secrets and variables -> Actions bo'limiga kirib quyidagi 4 ta secretni qo'shing:
+          1. KEYSTORE_BASE64   -> KEYSTORE_BASE64.txt fayli ichidagi uzun matnni nusxalab qo'ying
+          2. KEYSTORE_PASSWORD -> Alharitm2026ProKey
+          3. KEY_ALIAS         -> alharitm_key
+          4. KEY_PASSWORD      -> Alharitm2026ProKey
+          KINFO
           fi
           # 2. gradle.properties
           write_file gradle.properties << 'EOF'
@@ -97,15 +108,16 @@ jobs:
           # 5. app/proguard-rules.pro
           write_file app/proguard-rules.pro << 'EOF'
           -keep class com.alharitm.uzbekfkeyboard.** { *; }
+          -keepclassmembers class * { *; }
           -dontwarn android.**
           EOF
-          # 6. app/build.gradle
+          # 6. app/build.gradle (R8 va Debug Symbols yoqilgan - Play Console talabi)
           write_file app/build.gradle << 'EOF'
           plugins {
               id 'com.android.application'
               id 'org.jetbrains.kotlin.android'
           }
-          def runNum = (System.getenv("GITHUB_RUN_NUMBER") ?: "15").toInteger()
+          def runNum = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger() + 100
           android {
               namespace = 'com.alharitm.uzbekfkeyboard'
               compileSdk = 35
@@ -127,8 +139,9 @@ jobs:
               buildTypes {
                   release {
                       signingConfig = signingConfigs.release
-                      minifyEnabled = false
-                      shrinkResources = false
+                      minifyEnabled = true
+                      shrinkResources = true
+                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                   }
                   debug {
                       signingConfig = signingConfigs.release
@@ -225,7 +238,7 @@ jobs:
                   android:imeSubtypeMode="keyboard" />
           </input-method>
           EOF
-          # 9. AndroidManifest.xml
+          # 9. AndroidManifest.xml (Faqat VIBRATE ruxsati bor, INTERNET yo'q = 100% Maxfiylik kafolati)
           write_file app/src/main/AndroidManifest.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -886,7 +899,7 @@ jobs:
                   }
                   if (isPasswordInput) {
                       val shieldPill = TextView(this).apply {
-                          text = "🔒 ALHARITM Parol Himoyasi ••••••••"
+                          text = "🔒 ALHARITM Oflayn Parol Himoyasi ••••••••"
                           setTextColor(KbConfig.safeColor(theme.accentBg))
                           setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                           typeface = Typeface.DEFAULT_BOLD
@@ -1117,7 +1130,7 @@ jobs:
                       setPadding(dp(8), dp(4), dp(8), dp(8))
                   }
                   val header = TextView(this).apply {
-                      text = "G文  ALHARITM Tarjimon va Alifbo Oʻgirgich"
+                      text = "G文  ALHARITM Oflayn Alifbo Oʻgirgich va Lugʻat"
                       setTextColor(KbConfig.safeColor(theme.keyText))
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)
                       typeface = Typeface.DEFAULT_BOLD
@@ -1190,15 +1203,6 @@ jobs:
                       }
                   })
                   box.addView(convRow)
-                  val externalRow = createRowLayout(dp(44))
-                  externalRow.addView(createActionKey("🇺🇿 Tilmoch AI da tarjima", theme.accentBg, theme.accentText, 1f) {
-                      openExternalUrl("https://tilmoch.ai")
-                  })
-                  externalRow.addView(createActionKey("🌐 Google Translate", theme.specKeyBg, theme.keyText, 1f) {
-                      val encoded = Uri.encode(sampleText)
-                      openExternalUrl("https://translate.google.com/?sl=uz&tl=en&text=$encoded&op=translate")
-                  })
-                  box.addView(externalRow)
                   val backRow = createRowLayout(dp(40))
                   backRow.addView(createActionKey("⬅️ Termılmaga qaytish (ABC)", theme.specKeyBg, theme.keyText, 1f) {
                       currentMode = ViewMode.LETTERS
@@ -1206,14 +1210,6 @@ jobs:
                   })
                   box.addView(backRow)
                   board.addView(box)
-              }
-              private fun openExternalUrl(url: String) {
-                  try {
-                      val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                      }
-                      startActivity(intent)
-                  } catch (_: Exception) {}
               }
               private fun buildSymbolsView1(board: LinearLayout, theme: KbTheme) {
                   val rows = listOf(
@@ -1655,10 +1651,11 @@ jobs:
               }
           }
           EOF
-          # 11. SetupActivity.kt
+          # 11. SetupActivity.kt (Ichki Maxfiylik Siyosati va ALHARITM Mualliflik Himoyasi bilan)
           write_file app/src/main/java/com/alharitm/uzbekfkeyboard/SetupActivity.kt << 'EOF'
           package com.alharitm.uzbekfkeyboard
           import android.app.Activity
+          import android.app.AlertDialog
           import android.content.Context
           import android.content.Intent
           import android.content.SharedPreferences
@@ -1710,7 +1707,7 @@ jobs:
                       setPadding(0, dp(4), 0, dp(4))
                   }
                   val sub = TextView(this).apply {
-                      text = "Yangi Oʻzbek alifbosi (F va QWERTY) hamda Kirill yozuvi uchun intellektual klaviatura.\nIshlab chiqaruvchi: ALHARITM (Sarvarbek Nazarov)"
+                      text = "Yangi Oʻzbek alifbosi (F va QWERTY) hamda Kirill yozuvi uchun 100% xavfsiz, oflayn intellektual termılma.\nIshlab chiqaruvchi: ALHARITM (Sarvarbek Nazarov)"
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                       setTextColor(Color.parseColor("#CBD5E1"))
                   }
@@ -1744,7 +1741,7 @@ jobs:
                   rowBtns.addView(btnSelect)
                   stepCard.addView(rowBtns)
                   val testInput = EditText(this).apply {
-                      hint = "✍️ Shu yerga yozib sinab koʻring (nuqta va vergulni tekshiring)..."
+                      hint = "✍️ Shu yerga yozib sinab koʻring..."
                       setTextColor(Color.parseColor("#0F172A"))
                       setHintTextColor(Color.parseColor("#64748B"))
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
@@ -1919,7 +1916,7 @@ jobs:
                   root.addView(themeCard)
                   val copyrightCard = cardContainer("#0F172A")
                   val copyTitle = TextView(this).apply {
-                      text = "🛡️ MUALLIFLIK HUQUQI VA LITSENZIYA"
+                      text = "🛡️ MUALLIFLIK HUQUQI VA MAXFIYLIK KAFOLATI"
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
                       typeface = Typeface.DEFAULT_BOLD
                       setTextColor(Color.parseColor("#38BDF8"))
@@ -1929,16 +1926,40 @@ jobs:
                       text = "Dastur nomi: Özbekça termılma v1.05\n" +
                              "Ishlab chiqaruvchi: ALHARITM kompaniyasi\n" +
                              "Muallif va huquq egasi: Sarvarbek Nazarov\n\n" +
-                             "© 2026 ALHARITM. Barcha mualliflik va intellektual mulk huquqlari xalqaro hamda mahalliy qonunchilik asosida toʻliq himoyalangan. " +
-                             "Ushbu dasturiy taʼminot, uning dizayni, algoritmlari va Oʻzbek F-termılma maketlarini muallif (ALHARITM) yozma ruxsatisiz nusxalash, oʻzgartirish yoki tijorat maqsadida tarqatish qatʼiyan man etiladi."
+                             "🔒 100% MAXFIYLIK: Ushbu dastur internetga ulanish huquqini (INTERNET permission) talab qilmaydi va toʻliq oflayn ishlaydi. Siz yozgan matnlar, parollar yoki shaxsiy maʼlumotlar hech qachon yigʻilmaydi va hech qayerga uzatilmaydi.\n\n" +
+                             "© 2026 ALHARITM. Barcha mualliflik va intellektual mulk huquqlari xalqaro hamda mahalliy qonunchilik asosida toʻliq himoyalangan."
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
                       setTextColor(Color.parseColor("#E2E8F0"))
                   }
+                  val privacyBtn = Button(this).apply {
+                      text = "📜 Maxfiylik siyosati (Privacy Policy) matnini oʻqish"
+                      isAllCaps = false
+                      setTextColor(Color.WHITE)
+                      background = pillDrawable("#1E293B")
+                      layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(42)).apply {
+                          setMargins(0, dp(12), 0, 0)
+                      }
+                      setOnClickListener { showPrivacyDialog() }
+                  }
                   copyrightCard.addView(copyTitle)
                   copyrightCard.addView(copyBody)
+                  copyrightCard.addView(privacyBtn)
                   root.addView(copyrightCard)
                   scroll.addView(root)
                   setContentView(scroll)
+              }
+              private fun showPrivacyDialog() {
+                  AlertDialog.Builder(this)
+                      .setTitle("Maxfiylik Siyosati (Privacy Policy)")
+                      .setMessage(
+                          "Özbekça termılma v1.05 — ALHARITM (Sarvarbek Nazarov)\n\n" +
+                          "1. Maʼlumotlarni yigʻmaslik: Ushbu klaviatura ilovasi foydalanuvchilarning hech qanday shaxsiy maʼlumotlarini, yozgan matnlarini, parollarini yoki kontaktlarini yigʻmaydi, saqlamaydi va uchinchi shaxslarga uzatmaydi.\n\n" +
+                          "2. 100% Oflayn ishlash: Ilova Android tizimidan INTERNET ruxsatini (android.permission.INTERNET) soʻramaydi. Barcha sozlamalar faqat qurilmaning oʻz ichki xotirasida (SharedPreferences) saqlanadi.\n\n" +
+                          "3. Ruxsatlar: Ilova faqat tugma bosilganda tebranish (VIBRATE) funksiyasi uchun ruxsat ishlatadi.\n\n" +
+                          "© 2026 ALHARITM. Barcha huquqlar himoyalangan."
+                      )
+                      .setPositiveButton("Tushunarli", null)
+                      .show()
               }
               private fun switchRow(titleText: String, subText: String, prefKey: String, defaultVal: Boolean): View {
                   val row = LinearLayout(this).apply {
@@ -2022,3 +2043,15 @@ jobs:
           name: Google-Play-Store-Ozbekca-Termilma-v1.05-AAB
           path: app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
+      - name: 8. Play Console Mapping (Deobfuscation) faylini yuklash
+        uses: actions/upload-artifact@v4
+        with:
+          name: Play-Console-Mapping-Txt
+          path: app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: warn
+      - name: 9. Doimiy Keystore Zaxirasi (Bir marta yuklab olib Secrets ga joylang)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALHARITM-DOIMIY-KEYSTORE-SHUNI-SAQLAB-QOYING
+          path: keystore-backup/*
+          if-no-files-found: ignore
