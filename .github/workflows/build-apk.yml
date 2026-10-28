@@ -1,4 +1,4 @@
-name: Build Uzbek-F v1.05
+name: Build Ozbekca Termilma v1.05 (ALHARITM - Play Store Ready)
 on:
   push:
     branches: [ "main", "master" ]
@@ -22,7 +22,7 @@ jobs:
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
-      - name: 5. Aragon v4.5 Loyihasini Yaratish va Kompilyatsiya Qilish (APK + AAB)
+      - name: 5. Ozbekca Termilma v1.05 Loyihasini Yaratish va Kompilyatsiya Qilish
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -45,11 +45,11 @@ jobs:
             echo "$KEYSTORE_BASE64" | tr -d ' \n\r\t' | base64 -d > release-key.jks || true
             if keytool -list -keystore release-key.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null 2>&1; then
               KEYSTORE_OK=true
-              echo "Doimiy keystore muvaffaqiyatli tasdiqlandi."
+              echo "Doimiy ALHARITM keystore muvaffaqiyatli tasdiqlandi."
             fi
           fi
           if [ "$KEYSTORE_OK" = false ]; then
-            echo "::warning::Secrets topilmadi yoki mos kelmadi. Avtomatik kalit yaratilmoqda..."
+            echo "::warning::Secrets topilmadi yoki mos kelmadi. Avtomatik ALHARITM kaliti yaratilmoqda..."
             rm -f release-key.jks
             export KEYSTORE_PASSWORD="TempKey2026x"
             export KEY_ALIAS="alharitm_key"
@@ -59,7 +59,7 @@ jobs:
               -alias "$KEY_ALIAS" \
               -keyalg RSA -keysize 2048 -validity 10000 \
               -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" \
-              -dname "CN=Sarvarbek Nazarov, OU=Alharitm, O=Alharitm, L=Tashkent, ST=Tashkent, C=UZ"
+              -dname "CN=Sarvarbek Nazarov, OU=ALHARITM, O=ALHARITM, L=Tashkent, ST=Tashkent, C=UZ"
           fi
           # 2. gradle.properties
           write_file gradle.properties << 'EOF'
@@ -84,7 +84,7 @@ jobs:
                   mavenCentral()
               }
           }
-          rootProject.name = "UzbekFKeyboardAragon"
+          rootProject.name = "OzbekcaTermilma"
           include(":app")
           EOF
           # 4. Root build.gradle
@@ -105,7 +105,7 @@ jobs:
               id 'com.android.application'
               id 'org.jetbrains.kotlin.android'
           }
-          def runNum = (System.getenv("GITHUB_RUN_NUMBER") ?: "10").toInteger()
+          def runNum = (System.getenv("GITHUB_RUN_NUMBER") ?: "15").toInteger()
           android {
               namespace = 'com.alharitm.uzbekfkeyboard'
               compileSdk = 35
@@ -114,7 +114,7 @@ jobs:
                   minSdk = 23
                   targetSdk = 35
                   versionCode = runNum
-                  versionName = "4.5.0"
+                  versionName = "1.05"
               }
               signingConfigs {
                   release {
@@ -207,7 +207,7 @@ jobs:
           write_file app/src/main/res/values/strings.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <string name="app_name">Oʻzbek F-Klaviatura Pro</string>
+              <string name="app_name">Özbekça termılma v1.05</string>
           </resources>
           EOF
           write_file app/src/main/res/xml/method.xml << 'EOF'
@@ -216,7 +216,7 @@ jobs:
               android:settingsActivity="com.alharitm.uzbekfkeyboard.SetupActivity"
               android:supportsSwitchingToNextInputMethod="true">
               <subtype
-                  android:label="Oʻzbek F / Lotin (Ö, Ğ, Ş, Ç)"
+                  android:label="Özbekça termılma (Ö, Ğ, Ş, Ç)"
                   android:imeSubtypeLocale="uz_UZ"
                   android:imeSubtypeMode="keyboard" />
               <subtype
@@ -239,6 +239,7 @@ jobs:
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
                   <activity
                       android:name=".SetupActivity"
+                      android:label="@string/app_name"
                       android:exported="true"
                       android:windowSoftInputMode="stateHidden|adjustResize">
                       <intent-filter>
@@ -289,6 +290,7 @@ jobs:
           import android.view.MotionEvent
           import android.view.View
           import android.view.ViewGroup
+          import android.view.WindowInsets
           import android.view.inputmethod.EditorInfo
           import android.widget.Button
           import android.widget.FrameLayout
@@ -315,7 +317,10 @@ jobs:
               val isCyrillic: Boolean = false
           )
           object KbConfig {
-              const val PREFS_NAME = "alharitm_uzbek_f_aragon_v45"
+              const val APP_TITLE = "Özbekça termılma v1.05"
+              const val COMPANY_NAME = "ALHARITM"
+              const val COPYRIGHT_SHORT = "© 2026 ALHARITM. Barcha huquqlar himoyalangan."
+              const val PREFS_NAME = "alharitm_ozbekca_termilma_v105"
               const val KEY_THEME = "theme_id"
               const val KEY_LAYOUT = "layout_id"
               const val KEY_NUM_ROW = "show_num_row"
@@ -323,8 +328,9 @@ jobs:
               const val KEY_LANG_KEY = "show_lang_key"
               const val KEY_COMMA_KEY = "show_comma_key"
               const val KEY_PERIOD_KEY = "show_period_key"
-              const val KEY_FONT_SCALE = "font_scale_v45"
-              const val KEY_KEY_HEIGHT = "key_height_scale_v45"
+              const val KEY_FONT_SCALE = "font_scale_v105"
+              const val KEY_KEY_HEIGHT = "key_height_scale_v105"
+              const val KEY_BOTTOM_OFFSET_DP = "bottom_offset_dp_v105"
               const val KEY_ONE_HANDED = "one_handed_mode"
               const val KEY_VIBRATE_ENABLED = "vibrate_enabled"
               const val KEY_VIBRATE_STRENGTH = "vibrate_strength_ms"
@@ -352,8 +358,8 @@ jobs:
               val LAYOUTS = listOf(
                   KbLayoutDef(
                       "uz_f_v10",
-                      "Oʻzbek F v1.0 (Standart 10×3)",
-                      "Oʻzbek F",
+                      "Özbekça F v1.0 (Standart 10×3)",
+                      "Özbekça F",
                       listOf(
                           listOf("f", "g", "ğ", "o", "q", "d", "r", "n", "h", "p"),
                           listOf("u", "i", "e", "a", "ö", "t", "k", "l", "m", "s"),
@@ -363,8 +369,8 @@ jobs:
                   ),
                   KbLayoutDef(
                       "uz_f_v11",
-                      "Oʻzbek F v1.1 (Y oʻrtada, Ö tepada)",
-                      "Oʻzbek F 1.1",
+                      "Özbekça F v1.1 (Y oʻrtada, Ö tepada)",
+                      "Özbekça F 1.1",
                       listOf(
                           listOf("f", "g", "ğ", "ö", "q", "d", "r", "n", "h", "p"),
                           listOf("u", "i", "e", "a", "o", "t", "k", "l", "m", "y"),
@@ -374,8 +380,8 @@ jobs:
                   ),
                   KbLayoutDef(
                       "uz_qwerty_new",
-                      "Yangi Oʻzbek QWERTY (Ö, Ğ, Ş, Ç, ʼ)",
-                      "Oʻzbek QWERTY",
+                      "Yangi Özbekça QWERTY (Ö, Ğ, Ş, Ç, ʼ)",
+                      "Özbek QWERTY",
                       listOf(
                           listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "ö", "ğ"),
                           listOf("a", "s", "d", "f", "g", "h", "j", "k", "l", "ş", "ç"),
@@ -460,11 +466,11 @@ jobs:
               )
               val DICTIONARY_WORDS = listOf(
                   "assalomu", "alaykum", "özbekiston", "özbek", "töşkent", "yangi", "alifbo",
-                  "klaviatura", "dastur", "taʼlim", "maʼlumot", "maʼnaviyat", "eʼtibor",
+                  "termılma", "dastur", "taʼlim", "maʼlumot", "maʼnaviyat", "eʼtibor",
                   "yaxşi", "töğri", "böladi", "bölib", "uçun", "bilan", "hamda", "lekin",
                   "şuningdek", "qöşimça", "işlaş", "işonç", "öqiş", "örganiş", "sozlamalar",
-                  "harflar", "tugmalar", "tezlik", "aniqlik", "akademiya", "darslar",
-                  "muvaffaqiyat", "tabriklaymiz", "rahmat", "marhamat", "doʻstlar"
+                  "harflar", "tugmalar", "tezlik", "aniqlik", "alharitm", "darslar",
+                  "muvaffaqiyat", "tabriklaymiz", "rahmat", "marhamat", "döstlar"
               )
               val CYRILLIC_AUTO_FIX = mapOf(
                   "узбек" to "ўзбек", "узбекистон" to "ўзбекистон", "укиш" to "ўқиш",
@@ -487,7 +493,7 @@ jobs:
                   "yöq" to Triple("No", "Hayır / Yok", "Нет"),
                   "özbekiston" to Triple("Uzbekistan", "Özbekistan", "Узбекистан"),
                   "dastur" to Triple("Application", "Uygulama", "Программа"),
-                  "klaviatura" to Triple("Keyboard", "Klavye", "Клавиатура"),
+                  "termılma" to Triple("Keyboard", "Klavye", "Клавиатура"),
                   "taʼlim" to Triple("Education", "Eğitim", "Образование"),
                   "maʼlumot" to Triple("Information", "Bilgi", "Информация"),
                   "töğri" to Triple("Correct", "Doğru", "Правильно")
@@ -512,7 +518,8 @@ jobs:
                       'N' to 'Н', 'n' to 'н', 'O' to 'О', 'o' to 'о', 'P' to 'П', 'p' to 'п',
                       'Q' to 'Қ', 'q' to 'қ', 'R' to 'Р', 'r' to 'р', 'S' to 'С', 's' to 'с',
                       'T' to 'Т', 't' to 'т', 'U' to 'У', 'u' to 'у', 'V' to 'В', 'v' to 'в',
-                      'X' to 'Х', 'x' to 'х', 'Y' to 'Й', 'y' to 'й', 'Z' to 'З', 'z' to 'з'
+                      'X' to 'Х', 'x' to 'х', 'Y' to 'Й', 'y' to 'й', 'Z' to 'З', 'z' to 'з',
+                      'ı' to 'и', 'İ' to 'И'
                   )
                   val sb = StringBuilder()
                   for (c in s) sb.append(charMap[c] ?: c)
@@ -607,6 +614,7 @@ jobs:
               private var lastShiftClickTime = 0L
               private var lastSpaceClickTime = 0L
               private var isPasswordInput = false
+              private var systemBottomInsetPx = 0
               private var lastAutoReplacedOriginal: String? = null
               private var lastAutoReplacedTarget: String? = null
               private var keyPreviewPopup: PopupWindow? = null
@@ -638,10 +646,30 @@ jobs:
                           ViewGroup.LayoutParams.MATCH_PARENT,
                           ViewGroup.LayoutParams.WRAP_CONTENT
                       )
+                      setOnApplyWindowInsetsListener { _, insets ->
+                          val navBottom = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                              insets.getInsets(WindowInsets.Type.navigationBars() or WindowInsets.Type.systemBars()).bottom
+                          } else {
+                              @Suppress("DEPRECATION")
+                              insets.systemWindowInsetBottom
+                          }
+                          if (navBottom != systemBottomInsetPx) {
+                              systemBottomInsetPx = navBottom
+                              renderKeyboardUI()
+                          }
+                          insets
+                      }
                   }
                   rootContainer = container
                   renderKeyboardUI()
                   return container
+              }
+              private fun computeSafeBottomPaddingPx(): Int {
+                  val userExtraDp = prefs.getInt(KbConfig.KEY_BOTTOM_OFFSET_DP, 36)
+                  val resId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+                  val resNavPx = if (resId > 0) resources.getDimensionPixelSize(resId) else 0
+                  val baseInset = maxOf(systemBottomInsetPx, resNavPx, dp(16))
+                  return baseInset + dp(userExtraDp)
               }
               override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
                   super.onStartInputView(info, restarting)
@@ -752,9 +780,11 @@ jobs:
                   container.removeAllViews()
                   val theme = getActiveTheme()
                   val oneHanded = prefs.getBoolean(KbConfig.KEY_ONE_HANDED, false)
+                  val safeBottomPx = computeSafeBottomPaddingPx()
                   val outerWrapper = LinearLayout(this).apply {
                       orientation = LinearLayout.HORIZONTAL
                       setBackgroundColor(KbConfig.safeColor(theme.boardBg))
+                      setPadding(0, 0, 0, safeBottomPx)
                       layoutParams = FrameLayout.LayoutParams(
                           ViewGroup.LayoutParams.MATCH_PARENT,
                           ViewGroup.LayoutParams.WRAP_CONTENT
@@ -763,7 +793,7 @@ jobs:
                   val mainBoard = LinearLayout(this).apply {
                       orientation = LinearLayout.VERTICAL
                       setBackgroundColor(KbConfig.safeColor(theme.boardBg))
-                      setPadding(dp(3), dp(4), dp(3), dp(8))
+                      setPadding(dp(4), dp(4), dp(4), dp(6))
                       layoutParams = LinearLayout.LayoutParams(
                           0,
                           ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -856,9 +886,9 @@ jobs:
                   }
                   if (isPasswordInput) {
                       val shieldPill = TextView(this).apply {
-                          text = "🔒 Maxfiy parol rejimi  ••••••••"
+                          text = "🔒 ALHARITM Parol Himoyasi ••••••••"
                           setTextColor(KbConfig.safeColor(theme.accentBg))
-                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                           typeface = Typeface.DEFAULT_BOLD
                           gravity = Gravity.CENTER
                           layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
@@ -1087,7 +1117,7 @@ jobs:
                       setPadding(dp(8), dp(4), dp(8), dp(8))
                   }
                   val header = TextView(this).apply {
-                      text = "G文  Aqlli Tarjimon va Alifbo Oʻgirgich"
+                      text = "G文  ALHARITM Tarjimon va Alifbo Oʻgirgich"
                       setTextColor(KbConfig.safeColor(theme.keyText))
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)
                       typeface = Typeface.DEFAULT_BOLD
@@ -1170,7 +1200,7 @@ jobs:
                   })
                   box.addView(externalRow)
                   val backRow = createRowLayout(dp(40))
-                  backRow.addView(createActionKey("⬅️ Klaviaturaga qaytish (ABC)", theme.specKeyBg, theme.keyText, 1f) {
+                  backRow.addView(createActionKey("⬅️ Termılmaga qaytish (ABC)", theme.specKeyBg, theme.keyText, 1f) {
                       currentMode = ViewMode.LETTERS
                       renderKeyboardUI()
                   })
@@ -1234,7 +1264,7 @@ jobs:
                       listOf("+", "1", "2", "3", "%"),
                       listOf("-", "4", "5", "6", "␣"),
                       listOf("*", "7", "8", "9", "⌫"),
-                      listOf("ABC", ",", "0", "=", "⏎")
+                      listOf("ABC", ",", "0", ".", "⏎")
                   )
                   gridRows.forEach { r ->
                       val rowLayout = createRowLayout(dp(50))
@@ -1292,12 +1322,13 @@ jobs:
                       setPadding(dp(8), dp(6), dp(8), dp(6))
                   }
                   fun tilePair(t1: String, act1: () -> Unit, t2: String, act2: () -> Unit): LinearLayout {
-                      val row = createRowLayout(dp(50))
+                      val row = createRowLayout(dp(48))
                       row.addView(createActionKey(t1, theme.keyBg, theme.keyText, 1f, act1))
                       row.addView(createActionKey(t2, theme.keyBg, theme.keyText, 1f, act2))
                       return row
                   }
                   val curScale = prefs.getInt(KbConfig.KEY_FONT_SCALE, 130)
+                  val curBottomOffset = prefs.getInt(KbConfig.KEY_BOTTOM_OFFSET_DP, 36)
                   val vibOn = prefs.getBoolean(KbConfig.KEY_VIBRATE_ENABLED, true)
                   grid.addView(tilePair(
                       "🔤 Harf: ${curScale}%", {
@@ -1311,19 +1342,39 @@ jobs:
                           currentMode = ViewMode.LETTERS
                           renderKeyboardUI()
                       },
-                      "🎨 Mavzular", { currentMode = ViewMode.THEME_PICKER; renderKeyboardUI() }
+                      "📐 Pastki joy: +${curBottomOffset}dp", {
+                          val nextOffset = when {
+                              curBottomOffset < 24 -> 24
+                              curBottomOffset < 36 -> 36
+                              curBottomOffset < 48 -> 48
+                              curBottomOffset < 64 -> 64
+                              else -> 12
+                          }
+                          prefs.edit().putInt(KbConfig.KEY_BOTTOM_OFFSET_DP, nextOffset).apply()
+                          Toast.makeText(this, "Pastki balandlik: +${nextOffset}dp", Toast.LENGTH_SHORT).show()
+                          renderKeyboardUI()
+                      }
                   ))
                   grid.addView(tilePair(
                       "⌨️ Maket: ${getActiveLayout().badge}", { cycleNextLayout() },
-                      "G文 Tarjima & Kirill", { currentMode = ViewMode.TRANSLATOR; renderKeyboardUI() }
+                      "🎨 Mavzular", { currentMode = ViewMode.THEME_PICKER; renderKeyboardUI() }
                   ))
                   grid.addView(tilePair(
                       if (vibOn) "📳 Vibratsiya: ON" else "📴 Vibratsiya: OFF", {
                           prefs.edit().putBoolean(KbConfig.KEY_VIBRATE_ENABLED, !vibOn).apply()
                           renderKeyboardUI()
                       },
-                      "⚙️ Sozlamalar", { openSettingsApp() }
+                      "⚙️ ALHARITM Sozlamalar", { openSettingsApp() }
                   ))
+                  val brandFooter = TextView(this).apply {
+                      text = "Özbekça termılma v1.05  •  © 2026 ALHARITM (Sarvarbek Nazarov)"
+                      setTextColor(KbConfig.safeColor(theme.accentBg))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
+                      typeface = Typeface.DEFAULT_BOLD
+                      gravity = Gravity.CENTER
+                      setPadding(0, dp(6), 0, dp(2))
+                  }
+                  grid.addView(brandFooter)
                   board.addView(grid)
               }
               private fun buildThemePickerView(board: LinearLayout, theme: KbTheme) {
@@ -1347,7 +1398,7 @@ jobs:
                   board.addView(wrap)
               }
               private fun buildBottomActionRow(theme: KbTheme, spaceLabel: String): View {
-                  val row = createRowLayout(dp(46))
+                  val row = createRowLayout(dp(48))
                   val showComma = prefs.getBoolean(KbConfig.KEY_COMMA_KEY, true)
                   val showEmoji = prefs.getBoolean(KbConfig.KEY_EMOJI_KEY, true)
                   val showLang = prefs.getBoolean(KbConfig.KEY_LANG_KEY, true)
@@ -1356,7 +1407,7 @@ jobs:
                       currentMode = ViewMode.SYMBOLS_1
                       renderKeyboardUI()
                   })
-                  if (showComma) row.addView(createTouchDotCharKey(",", null, theme, 0.85f, 18f))
+                  if (showComma) row.addView(createTouchDotCharKey(",", null, theme, 0.9f, 19f))
                   if (showEmoji) {
                       row.addView(createActionKey("😊", theme.specKeyBg, theme.keyText, 0.9f) {
                           currentMode = ViewMode.EMOJI
@@ -1368,31 +1419,31 @@ jobs:
                           cycleNextLayout()
                       })
                   }
-                  val spaceBtn = createActionKey(spaceLabel, theme.keyBg, theme.keyText, 3.6f) { handleSpace() }
+                  val spaceBtn = createActionKey(spaceLabel, theme.keyBg, theme.keyText, 3.3f) { handleSpace() }
                   spaceBtn.setOnLongClickListener {
                       vibrateKey()
                       cycleNextLayout()
                       true
                   }
                   row.addView(spaceBtn)
-                  if (showPeriod) row.addView(createTouchDotCharKey(".", "?", theme, 0.85f, 18f))
-                  row.addView(createActionKey("⏎", theme.accentBg, theme.accentText, 1.45f) { handleEnter() })
+                  if (showPeriod) row.addView(createTouchDotCharKey(".", "?", theme, 1.05f, 20f))
+                  row.addView(createActionKey("⏎", theme.accentBg, theme.accentText, 1.55f) { handleEnter() })
                   return row
               }
               private fun buildSymbolsBottomRow(theme: KbTheme): View {
-                  val row = createRowLayout(dp(46))
+                  val row = createRowLayout(dp(48))
                   row.addView(createActionKey("ABC", theme.specKeyBg, theme.keyText, 1.3f) {
                       currentMode = ViewMode.LETTERS
                       renderKeyboardUI()
                   })
-                  row.addView(createTouchDotCharKey(",", null, theme, 0.9f, 18f))
+                  row.addView(createTouchDotCharKey(",", null, theme, 0.95f, 19f))
                   row.addView(createActionKey("1234", theme.specKeyBg, theme.keyText, 1.1f) {
                       currentMode = ViewMode.NUMPAD
                       renderKeyboardUI()
                   })
-                  row.addView(createActionKey(getActiveLayout().badge, theme.keyBg, theme.keyText, 3.5f) { handleSpace() })
-                  row.addView(createTouchDotCharKey(".", null, theme, 0.9f, 18f))
-                  row.addView(createActionKey("⏎", theme.accentBg, theme.accentText, 1.4f) { handleEnter() })
+                  row.addView(createActionKey(getActiveLayout().badge, theme.keyBg, theme.keyText, 3.2f) { handleSpace() })
+                  row.addView(createTouchDotCharKey(".", "?", theme, 1.05f, 20f))
+                  row.addView(createActionKey("⏎", theme.accentBg, theme.accentText, 1.55f) { handleEnter() })
                   return row
               }
               private fun createRowLayout(heightPx: Int): LinearLayout {
@@ -1642,33 +1693,33 @@ jobs:
                   }
                   val root = LinearLayout(this).apply {
                       orientation = LinearLayout.VERTICAL
-                      setPadding(dp(18), dp(22), dp(18), dp(40))
+                      setPadding(dp(18), dp(28), dp(18), dp(48))
                   }
                   val headerCard = cardContainer("#0F172A")
                   val badgeRow = TextView(this).apply {
-                      text = "🇺🇿  Ö • Ğ • Ş • Ç • Ў • Қ   |   ARAGON v4.5"
+                      text = "🇺🇿  ALHARITM RASMIY DASTURI  |  Ö • Ğ • Ş • Ç"
                       setTextColor(Color.parseColor("#38BDF8"))
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                       typeface = Typeface.DEFAULT_BOLD
                   }
                   val title = TextView(this).apply {
-                      text = "Oʻzbek F-Klaviatura Pro"
-                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
+                      text = "Özbekça termılma v1.05"
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 23f)
                       typeface = Typeface.DEFAULT_BOLD
                       setTextColor(Color.WHITE)
                       setPadding(0, dp(4), 0, dp(4))
                   }
                   val sub = TextView(this).apply {
-                      text = "Yangi Lotin, Oʻzbek F, QWERTY va Kirill • Popup harf • Parol himoyasi • Katta harflar (130%–200%)"
+                      text = "Yangi Oʻzbek alifbosi (F va QWERTY) hamda Kirill yozuvi uchun intellektual klaviatura.\nIshlab chiqaruvchi: ALHARITM (Sarvarbek Nazarov)"
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-                      setTextColor(Color.parseColor("#94A3B8"))
+                      setTextColor(Color.parseColor("#CBD5E1"))
                   }
                   headerCard.addView(badgeRow)
                   headerCard.addView(title)
                   headerCard.addView(sub)
                   root.addView(headerCard)
                   val stepCard = cardContainer("#FFFFFF")
-                  stepCard.addView(sectionLabel("1. Klaviaturani faollashtirish va sinash"))
+                  stepCard.addView(sectionLabel("1. Termılmani faollashtirish va sinash"))
                   val rowBtns = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
                   val btnEnable = Button(this).apply {
                       text = "1. Yoqish"
@@ -1693,7 +1744,7 @@ jobs:
                   rowBtns.addView(btnSelect)
                   stepCard.addView(rowBtns)
                   val testInput = EditText(this).apply {
-                      hint = "✍️ Oddiy matn yozib sinab koʻring (masalan: assalomu)..."
+                      hint = "✍️ Shu yerga yozib sinab koʻring (nuqta va vergulni tekshiring)..."
                       setTextColor(Color.parseColor("#0F172A"))
                       setHintTextColor(Color.parseColor("#64748B"))
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
@@ -1704,7 +1755,7 @@ jobs:
                       }
                   }
                   val passInput = EditText(this).apply {
-                      hint = "🔒 Parol himoyasini sinab koʻring (yulduzcha rejimi)..."
+                      hint = "🔒 Parol himoyasini sinab koʻring..."
                       inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
                       setTextColor(Color.parseColor("#0F172A"))
                       setHintTextColor(Color.parseColor("#64748B"))
@@ -1715,11 +1766,56 @@ jobs:
                   stepCard.addView(testInput)
                   stepCard.addView(passInput)
                   root.addView(stepCard)
+                  val bottomFixCard = cardContainer("#FFFFFF")
+                  bottomFixCard.addView(sectionLabel("2. Ekran osti balandligi (Navigatsiya menyusi ustiga tushmaslik uchun)"))
+                  val curBottomOffset = prefs.getInt(KbConfig.KEY_BOTTOM_OFFSET_DP, 36)
+                  val bottomTitle = TextView(this).apply {
+                      text = "Qoʻshimcha pastki boʻshliq: +${curBottomOffset} dp (Tavsiya: 36 dp – 48 dp)"
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)
+                      typeface = Typeface.DEFAULT_BOLD
+                      setTextColor(Color.parseColor("#0F172A"))
+                      setPadding(0, dp(4), 0, dp(6))
+                  }
+                  bottomFixCard.addView(bottomTitle)
+                  val bottomSeek = SeekBar(this).apply {
+                      max = 72
+                      progress = curBottomOffset.coerceIn(0, 72)
+                      setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                          override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
+                              bottomTitle.text = "Qoʻshimcha pastki boʻshliq: +$p dp (Tavsiya: 36 dp – 48 dp)"
+                              prefs.edit().putInt(KbConfig.KEY_BOTTOM_OFFSET_DP, p).apply()
+                          }
+                          override fun onStartTrackingTouch(s: SeekBar?) {}
+                          override fun onStopTrackingTouch(s: SeekBar?) {}
+                      })
+                  }
+                  bottomFixCard.addView(bottomSeek)
+                  val bottomPresetRow = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      setPadding(0, dp(8), 0, 0)
+                  }
+                  listOf("Past (16 dp)" to 16, "Standart (36 dp)" to 36, "Baland (52 dp)" to 52).forEach { (lbl, dpVal) ->
+                      val b = Button(this).apply {
+                          text = lbl
+                          isAllCaps = false
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                          setTextColor(Color.parseColor("#1E293B"))
+                          background = pillDrawable("#E2E8F0")
+                          layoutParams = LinearLayout.LayoutParams(0, dp(38), 1f).apply { setMargins(dp(3), 0, dp(3), 0) }
+                          setOnClickListener {
+                              prefs.edit().putInt(KbConfig.KEY_BOTTOM_OFFSET_DP, dpVal).apply()
+                              renderSettingsScreen()
+                          }
+                      }
+                      bottomPresetRow.addView(b)
+                  }
+                  bottomFixCard.addView(bottomPresetRow)
+                  root.addView(bottomFixCard)
                   val fontCard = cardContainer("#FFFFFF")
-                  fontCard.addView(sectionLabel("2. Harf Kattaligi (Standart: 130%, Maksimal: 200%)"))
+                  fontCard.addView(sectionLabel("3. Harf Kattaligi (Standart: 130%, Maksimal: 200%)"))
                   val curFontScale = prefs.getInt(KbConfig.KEY_FONT_SCALE, 130)
                   val fontTitle = TextView(this).apply {
-                      text = "Harflar oʻlchami: $curFontScale% (Birlamchi standart: 130%)"
+                      text = "Harflar oʻlchami: $curFontScale%"
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
                       typeface = Typeface.DEFAULT_BOLD
                       setTextColor(Color.parseColor("#0F172A"))
@@ -1732,7 +1828,7 @@ jobs:
                       setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                           override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
                               val scale = 100 + p
-                              fontTitle.text = "Harflar oʻlchami: $scale% (Birlamchi standart: 130%)"
+                              fontTitle.text = "Harflar oʻlchami: $scale%"
                               prefs.edit().putInt(KbConfig.KEY_FONT_SCALE, scale).apply()
                           }
                           override fun onStartTrackingTouch(s: SeekBar?) {}
@@ -1762,7 +1858,7 @@ jobs:
                   fontCard.addView(presetRow)
                   root.addView(fontCard)
                   val layoutCard = cardContainer("#FFFFFF")
-                  layoutCard.addView(sectionLabel("3. Klaviatura Joylashuvi (Lotin F, QWERTY va Kirill)"))
+                  layoutCard.addView(sectionLabel("4. Termılma Joylashuvi (Lotin F, QWERTY va Kirill)"))
                   val activeLayoutId = prefs.getString(KbConfig.KEY_LAYOUT, "uz_f_v10")
                   KbConfig.LAYOUTS.forEach { l ->
                       val isSelected = l.id == activeLayoutId
@@ -1785,7 +1881,7 @@ jobs:
                   }
                   root.addView(layoutCard)
                   val prefCard = cardContainer("#FFFFFF")
-                  prefCard.addView(sectionLabel("4. Tugma Harakati, Haptik va Imlo"))
+                  prefCard.addView(sectionLabel("5. Tugma Harakati, Haptik va Imlo"))
                   prefCard.addView(switchRow("Bosilganda harfni tepada chiqarish (Popup)", "Bosilgan harf kattalashib koʻrinadi", KbConfig.KEY_POPUP_PREVIEW, true))
                   prefCard.addView(switchRow("Oʻzbek imlo tekshiruvi va 'Ortga qaytarish'", "Xato soʻzlarni toʻgʻrilaydi va qaytarish tugmasini chiqaradi", KbConfig.KEY_AUTO_CORRECT, true))
                   prefCard.addView(switchRow("Haptik aloqa (Vibratsiya)", "Tugma bosilganda yengil tebranish", KbConfig.KEY_VIBRATE_ENABLED, true))
@@ -1793,7 +1889,7 @@ jobs:
                   prefCard.addView(switchRow("Til almashtirish tugmasi (🌐)", "Lotin va Kirill orasida tezkor oʻtish", KbConfig.KEY_LANG_KEY, true))
                   root.addView(prefCard)
                   val themeCard = cardContainer("#FFFFFF")
-                  themeCard.addView(sectionLabel("5. Mavzular va Ranglar (Theme)"))
+                  themeCard.addView(sectionLabel("6. Mavzular va Ranglar (Theme)"))
                   val activeThemeId = prefs.getString(KbConfig.KEY_THEME, "default_dark")
                   KbConfig.THEMES.chunked(2).forEach { pair ->
                       val r = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
@@ -1821,6 +1917,26 @@ jobs:
                       themeCard.addView(r)
                   }
                   root.addView(themeCard)
+                  val copyrightCard = cardContainer("#0F172A")
+                  val copyTitle = TextView(this).apply {
+                      text = "🛡️ MUALLIFLIK HUQUQI VA LITSENZIYA"
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
+                      typeface = Typeface.DEFAULT_BOLD
+                      setTextColor(Color.parseColor("#38BDF8"))
+                      setPadding(0, 0, 0, dp(6))
+                  }
+                  val copyBody = TextView(this).apply {
+                      text = "Dastur nomi: Özbekça termılma v1.05\n" +
+                             "Ishlab chiqaruvchi: ALHARITM kompaniyasi\n" +
+                             "Muallif va huquq egasi: Sarvarbek Nazarov\n\n" +
+                             "© 2026 ALHARITM. Barcha mualliflik va intellektual mulk huquqlari xalqaro hamda mahalliy qonunchilik asosida toʻliq himoyalangan. " +
+                             "Ushbu dasturiy taʼminot, uning dizayni, algoritmlari va Oʻzbek F-termılma maketlarini muallif (ALHARITM) yozma ruxsatisiz nusxalash, oʻzgartirish yoki tijorat maqsadida tarqatish qatʼiyan man etiladi."
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+                      setTextColor(Color.parseColor("#E2E8F0"))
+                  }
+                  copyrightCard.addView(copyTitle)
+                  copyrightCard.addView(copyBody)
+                  root.addView(copyrightCard)
                   scroll.addView(root)
                   setContentView(scroll)
               }
@@ -1897,12 +2013,12 @@ jobs:
       - name: 6. Release APK paketini yuklash
         uses: actions/upload-artifact@v4
         with:
-          name: Alharitm-Uzbek-F-Aragon-v4.5-Release-APK
+          name: Alharitm-Ozbekca-Termilma-v1.05-Release-APK
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
       - name: 7. Google Play Store AAB paketini yuklash
         uses: actions/upload-artifact@v4
         with:
-          name: Google-Play-Store-Aragon-v4.5-Bundle-AAB
+          name: Google-Play-Store-Ozbekca-Termilma-v1.05-AAB
           path: app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
