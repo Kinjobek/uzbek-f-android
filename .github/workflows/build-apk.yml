@@ -1,4 +1,4 @@
-name: Build Uzbek-F Aragon Ultimate v4.4 (Play Store Ready)
+name: Build Uzbek-F Aragon Ultimate v4.5 (Play Store Ready)
 
 on:
   push:
@@ -10,25 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 1. Depodan kodlarni ol
+      - name: 1. Depodan kodlarni olish
         uses: actions/checkout@v4
 
-      - name: 2. Java JDK 17 kurulumu
+      - name: 2. Java JDK 17 ornatish
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 3. Gradle 8.5 kurulumu
+      - name: 3. Gradle 8.7 ornatish
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: '8.5'
+          gradle-version: '8.7'
 
-      - name: 4. Android SDK lisanslarini onayla
+      - name: 4. Android SDK 35 litsenziyalarini tasdiqlash
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
 
-      - name: 5. Aragon v4.4 Projesini Olustur ve Derle (APK + AAB)
+      - name: 5. Aragon v4.5 Loyihasini Yaratish va Kompilyatsiya Qilish (APK + AAB)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           rm -rf app
           mkdir -p app/src/main/java/com/alharitm/uzbekfkeyboard
@@ -37,1992 +43,2048 @@ jobs:
           mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/res/mipmap-anydpi-v26
 
-          # 1. Release Keystore imza anahtari olustur
+          write_file() {
+            sed 's/^          //' > "$1"
+          }
+
+          # 1. Release Keystore: GitHub Secrets'dan olinadi (bo'lmasa vaqtinchalik kalit)
           rm -f release-key.jks
-          keytool -genkeypair -v \
-            -keystore release-key.jks \
-            -alias alharitm_key \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass Alharitm2026! \
-            -keypass Alharitm2026! \
-            -dname "CN=Sarvarbek Nazarov, OU=Alharitm, O=Alharitm, L=Tashkent, ST=Tashkent, C=UZ"
-
-          # 2. settings.gradle
-          cat << 'EOF' > settings.gradle
-pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-rootProject.name = "UzbekFKeyboardAragon"
-include(":app")
-EOF
-
-          # 3. Root build.gradle
-          cat << 'EOF' > build.gradle
-plugins {
-    id 'com.android.application' version '8.2.0' apply false
-    id 'org.jetbrains.kotlin.android' version '1.9.20' apply false
-}
-EOF
-
-          # 4. app/build.gradle
-          cat << 'EOF' > app/build.gradle
-plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-}
-
-android {
-    namespace 'com.alharitm.uzbekfkeyboard'
-    compileSdk 34
-
-    defaultConfig {
-        applicationId "com.alharitm.uzbekfkeyboard"
-        minSdk 23
-        targetSdk 34
-        versionCode 9
-        versionName "4.4.0"
-    }
-
-    signingConfigs {
-        release {
-            storeFile file("../release-key.jks")
-            storePassword "Alharitm2026!"
-            keyAlias "alharitm_key"
-            keyPassword "Alharitm2026!"
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
-            shrinkResources false
-        }
-        debug {
-            signingConfig signingConfigs.release
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-}
-EOF
-
-          # 5. Uygulama Ikonu
-          cat << 'EOF' > app/src/main/res/drawable/ic_launcher_background.xml
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path android:fillColor="#0099B5" android:pathData="M0,0h108v35h-108z"/>
-    <path android:fillColor="#CE1126" android:pathData="M0,35h108v2.5h-108z"/>
-    <path android:fillColor="#FFFFFF" android:pathData="M0,37.5h108v33h-108z"/>
-    <path android:fillColor="#CE1126" android:pathData="M0,70.5h108v2.5h-108z"/>
-    <path android:fillColor="#1EB53A" android:pathData="M0,73h108v35h-108z"/>
-</vector>
-EOF
-
-          cat << 'EOF' > app/src/main/res/drawable/ic_launcher_foreground.xml
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path
-        android:fillColor="#E6141824"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:pathData="M24,24 L84,24 A10,10 0 0,1 94,34 L94,74 A10,10 0 0,1 84,84 L24,84 A10,10 0 0,1 14,74 L14,34 A10,10 0 0,1 24,24 Z"/>
-    <path android:fillColor="#0099B5" android:pathData="M23,29 L50,29 A4,4 0 0,1 54,33 L54,51 A4,4 0 0,1 50,55 L23,55 A4,4 0 0,1 19,51 L19,33 A4,4 0 0,1 23,29 Z"/>
-    <path android:fillColor="#2563EB" android:pathData="M58,29 L85,29 A4,4 0 0,1 89,33 L89,51 A4,4 0 0,1 85,55 L58,55 A4,4 0 0,1 54.5,51 L54.5,33 A4,4 0 0,1 58,29 Z"/>
-    <path android:fillColor="#1EB53A" android:pathData="M23,57 L50,57 A4,4 0 0,1 54,61 L54,77 A4,4 0 0,1 50,81 L23,81 A4,4 0 0,1 19,77 L19,61 A4,4 0 0,1 23,57 Z"/>
-    <path android:fillColor="#CE1126" android:pathData="M58,57 L85,57 A4,4 0 0,1 89,61 L89,77 A4,4 0 0,1 85,81 L58,81 A4,4 0 0,1 54.5,77 L54.5,61 A4,4 0 0,1 58,57 Z"/>
-</vector>
-EOF
-
-          cat << 'EOF' > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-<?xml version="1.0" encoding="utf-8"?>
-<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@drawable/ic_launcher_background"/>
-    <foreground android:drawable="@drawable/ic_launcher_foreground"/>
-</adaptive-icon>
-EOF
-
-          # 6. Strings & XML method
-          cat << 'EOF' > app/src/main/res/values/strings.xml
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">Oʻzbek F-Klaviatura Pro</string>
-</resources>
-EOF
-
-          cat << 'EOF' > app/src/main/res/xml/method.xml
-<?xml version="1.0" encoding="utf-8"?>
-<input-method xmlns:android="http://schemas.android.com/apk/res/android"
-    android:settingsActivity="com.alharitm.uzbekfkeyboard.SetupActivity"
-    android:supportsSwitchingToNextInputMethod="true">
-    <subtype
-        android:label="Oʻzbek F / Lotin (Ö, Ğ, Ş, Ç)"
-        android:imeSubtypeLocale="uz_UZ"
-        android:imeSubtypeMode="keyboard" />
-    <subtype
-        android:label="Ўзбек Кирилл (ЙЦУКЕН)"
-        android:imeSubtypeLocale="uz_CYRL_UZ"
-        android:imeSubtypeMode="keyboard" />
-</input-method>
-EOF
-
-          # 7. AndroidManifest.xml
-          cat << 'EOF' > app/src/main/AndroidManifest.xml
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <application
-        android:label="@string/app_name"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher"
-        android:allowBackup="false"
-        android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
-        <activity
-            android:name=".SetupActivity"
-            android:exported="true"
-            android:windowSoftInputMode="stateHidden|adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <service
-            android:name=".UzbekFKeyboardService"
-            android:label="@string/app_name"
-            android:permission="android.permission.BIND_INPUT_METHOD"
-            android:exported="true"
-            android:directBootAware="true">
-            <intent-filter>
-                <action android:name="android.view.InputMethod" />
-            </intent-filter>
-            <meta-data
-                android:name="android.view.im"
-                android:resource="@xml/method" />
-        </service>
-    </application>
-</manifest>
-EOF
-
-          # 8. UzbekFKeyboardService.kt
-          cat << 'EOF' > app/src/main/java/com/alharitm/uzbekfkeyboard/UzbekFKeyboardService.kt
-package com.alharitm.uzbekfkeyboard
-
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
-import android.inputmethodservice.InputMethodService
-import android.net.Uri
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.text.InputType
-import android.util.TypedValue
-import android.view.Gravity
-import android.view.KeyEvent
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.PopupWindow
-import android.widget.TextView
-import android.widget.Toast
-
-data class KbTheme(
-    val id: String,
-    val name: String,
-    val boardBg: String,
-    val keyBg: String,
-    val specKeyBg: String,
-    val keyText: String,
-    val accentBg: String,
-    val accentText: String,
-    val isLight: Boolean = false
-)
-
-data class KbLayoutDef(
-    val id: String,
-    val title: String,
-    val badge: String,
-    val rows: List<List<String>>,
-    val isCyrillic: Boolean = false
-)
-
-object KbConfig {
-    const val PREFS_NAME = "alharitm_uzbek_f_aragon_v44"
-    const val KEY_THEME = "theme_id"
-    const val KEY_LAYOUT = "layout_id"
-    const val KEY_NUM_ROW = "show_num_row"
-    const val KEY_EMOJI_KEY = "show_emoji_key"
-    const val KEY_LANG_KEY = "show_lang_key"
-    const val KEY_COMMA_KEY = "show_comma_key"
-    const val KEY_PERIOD_KEY = "show_period_key"
-    const val KEY_FONT_SCALE = "font_scale_v44"
-    const val KEY_KEY_HEIGHT = "key_height_scale_v44"
-    const val KEY_ONE_HANDED = "one_handed_mode"
-    const val KEY_VIBRATE_ENABLED = "vibrate_enabled"
-    const val KEY_VIBRATE_STRENGTH = "vibrate_strength_ms"
-    const val KEY_AUTO_CORRECT = "auto_correct_enabled"
-    const val KEY_POPUP_PREVIEW = "popup_preview_enabled"
-
-    fun safeColor(hex: String, fallback: Int = Color.DKGRAY): Int {
-        return try {
-            val clean = if (hex.startsWith("#")) hex else "#$hex"
-            Color.parseColor(clean)
-        } catch (e: Exception) {
-            fallback
-        }
-    }
-
-    val THEMES = listOf(
-        KbTheme("default_dark", "Default Dark", "#1B1B1F", "#2F3036", "#232429", "#F1F5F9", "#A8C7FA", "#062E6F", false),
-        KbTheme("default_light", "Default Light", "#EAEEF4", "#FFFFFF", "#D7DFEC", "#1E293B", "#1A73E8", "#FFFFFF", true),
-        KbTheme("uzbek_flag", "Oʻzbekiston Bayrogʻi", "#0B2239", "#007791", "#14532D", "#FFFFFF", "#1EB53A", "#FFFFFF", false),
-        KbTheme("oled_black", "Obsidian OLED", "#000000", "#16161A", "#0D0D10", "#F8FAFC", "#6366F1", "#FFFFFF", false),
-        KbTheme("high_contrast", "Koʻzga Qulay (Sariq/Qora)", "#000000", "#1C1C1C", "#2E2E2E", "#FFEB3B", "#FFD600", "#000000", false),
-        KbTheme("slate_blue", "Slate Blue", "#202A34", "#32404E", "#26323E", "#F1F5F9", "#7DD3FC", "#082F49", false),
-        KbTheme("crimson_red", "Crimson Red", "#B91C1C", "#DC2626", "#991B1B", "#FFFFFF", "#FCA5A5", "#450A0A", false),
-        KbTheme("forest_green", "Forest Green", "#15803D", "#22C55E", "#166534", "#FFFFFF", "#BBF7D0", "#052E16", false),
-        KbTheme("royal_blue", "Royal Blue", "#1D4ED8", "#2563EB", "#1E40AF", "#FFFFFF", "#93C5FD", "#172554", false)
-    )
-
-    val LAYOUTS = listOf(
-        KbLayoutDef(
-            "uz_f_v10",
-            "Oʻzbek F v1.0 (Standart 10×3)",
-            "Oʻzbek F",
-            listOf(
-                listOf("f", "g", "ğ", "o", "q", "d", "r", "n", "h", "p"),
-                listOf("u", "i", "e", "a", "ö", "t", "k", "l", "m", "s"),
-                listOf("j", "x", "v", "ç", "z", "ş", "b", "y", "ʼ")
-            ),
-            false
-        ),
-        KbLayoutDef(
-            "uz_f_v11",
-            "Oʻzbek F v1.1 (Y oʻrtada, Ö tepada)",
-            "Oʻzbek F 1.1",
-            listOf(
-                listOf("f", "g", "ğ", "ö", "q", "d", "r", "n", "h", "p"),
-                listOf("u", "i", "e", "a", "o", "t", "k", "l", "m", "y"),
-                listOf("j", "x", "v", "ç", "z", "s", "b", "ş", "ʼ")
-            ),
-            false
-        ),
-        KbLayoutDef(
-            "uz_qwerty_new",
-            "Yangi Oʻzbek QWERTY (Ö, Ğ, Ş, Ç, ʼ)",
-            "Oʻzbek QWERTY",
-            listOf(
-                listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "ö", "ğ"),
-                listOf("a", "s", "d", "f", "g", "h", "j", "k", "l", "ş", "ç"),
-                listOf("z", "x", "c", "v", "b", "n", "m", "ʼ")
-            ),
-            false
-        ),
-        KbLayoutDef(
-            "uz_cyrl",
-            "Ўзбек Кирилл (ЙЦУКЕН + Ў, Қ, Ғ, Ҳ)",
-            "Ўзбек Кирилл",
-            listOf(
-                listOf("й", "ц", "у", "к", "е", "н", "г", "ш", "ў", "з", "х", "ъ"),
-                listOf("ф", "қ", "в", "а", "п", "р", "о", "л", "д", "ж", "э"),
-                listOf("я", "ч", "с", "м", "и", "т", "ь", "б", "ю", "ғ", "ҳ")
-            ),
-            true
-        ),
-        KbLayoutDef(
-            "tr_f_classic",
-            "Türkçe F (12×3 Klassik)",
-            "Türkçe F",
-            listOf(
-                listOf("f", "g", "ğ", "ı", "o", "d", "r", "n", "h", "p", "q", "w"),
-                listOf("u", "i", "e", "a", "ü", "t", "k", "m", "l", "y", "ş"),
-                listOf("j", "ö", "v", "c", "ç", "z", "s", "b", "x")
-            ),
-            false
-        )
-    )
-
-    val POPUP_ALTS = mapOf(
-        "o" to listOf("ö", "oʻ", "0"),
-        "ö" to listOf("o", "oʻ", "ü"),
-        "g" to listOf("ğ", "gʻ"),
-        "ğ" to listOf("g", "gʻ"),
-        "s" to listOf("ş", "sh", "$"),
-        "ş" to listOf("s", "sh"),
-        "c" to listOf("ç", "ch"),
-        "ç" to listOf("c", "ch"),
-        "v" to listOf("w", "v"),
-        "u" to listOf("ü", "ú"),
-        "i" to listOf("ı", "í"),
-        "a" to listOf("ä", "@"),
-        "e" to listOf("é", "€"),
-        "ʼ" to listOf("'", "’", "\""),
-        "." to listOf(",", "?", "!", ":", ";", "@"),
-        "у" to listOf("ў", "у"),
-        "к" to listOf("қ", "к"),
-        "г" to listOf("ғ", "г"),
-        "х" to listOf("ҳ", "х"),
-        "е" to listOf("ё", "э"),
-        "ъ" to listOf("ь", "ъ")
-    )
-
-    val EMOJIS = listOf(
-        "🔥", "❤️", "✨", "🇺🇿", "👍", "🙏", "😊", "😂", "🤣", "😍",
-        "🥰", "😎", "🤩", "🥳", "😭", "😅", "🙌", "👏", "💪", "🤝",
-        "🎉", "🌹", "☀️", "🌙", "⭐", "⚡", "✅", "❌", "💯", "🚀",
-        "📚", "💻", "📱", "☕", "🍵", "🍉", "🍇", "🕌", "🏛️", "🎯"
-    )
-
-    val AUTO_FIX_MAP = mapOf(
-        "ozbek" to "özbek", "ozbekiston" to "özbekiston", "ogil" to "öğil",
-        "oqish" to "öqiş", "oqituvchi" to "öqituvçi", "organish" to "örganiş",
-        "ozgarish" to "özgariş", "orta" to "örta", "ortoq" to "örtoq",
-        "otish" to "ötiş", "oyin" to "öyin", "oyla" to "öyla",
-        "korsatish" to "körsatiş", "korish" to "köriş", "kop" to "köp",
-        "kongil" to "köngil", "kocha" to "köça", "koz" to "köz",
-        "boladi" to "böladi", "bolib" to "bölib", "bolish" to "böliş",
-        "bolim" to "bölim", "togri" to "töğri", "toliq" to "töliq",
-        "tolov" to "tölov", "tort" to "tört", "toxta" to "töxta",
-        "qoshimcha" to "qöşimça", "qoshish" to "qöşiş", "qol" to "qöl",
-        "soz" to "söz", "sozlash" to "sözlaş", "soroq" to "söroq",
-        "yol" to "yöl", "yoq" to "yöq", "goya" to "ğoya", "golib" to "ğolib",
-        "gurur" to "ğurur", "ish" to "iş", "ishlash" to "işlaş",
-        "ishonch" to "işonç", "bosh" to "boş", "yaxshi" to "yaxşi",
-        "yosh" to "yoş", "shahar" to "şahar", "shaxs" to "şaxs",
-        "shart" to "şart", "shuningdek" to "şuningdek", "uchun" to "uçun",
-        "uch" to "uç", "chiqish" to "çiqiş", "chiroyli" to "çiroyli",
-        "kichik" to "kiçik", "kuchli" to "kuçli", "qachon" to "qaçon",
-        "hech" to "heç", "ochiq" to "oçiq", "talim" to "taʼlim",
-        "malumot" to "maʼlumot", "mano" to "maʼno", "manaviyat" to "maʼnaviyat",
-        "etibor" to "eʼtibor", "anana" to "anʼana", "sanat" to "sanʼat"
-    )
-
-    val DICTIONARY_WORDS = listOf(
-        "assalomu", "alaykum", "özbekiston", "özbek", "töşkent", "yangi", "alifbo",
-        "klaviatura", "dastur", "taʼlim", "maʼlumot", "maʼnaviyat", "eʼtibor",
-        "yaxşi", "töğri", "böladi", "bölib", "uçun", "bilan", "hamda", "lekin",
-        "şuningdek", "qöşimça", "işlaş", "işonç", "öqiş", "örganiş", "sozlamalar",
-        "harflar", "tugmalar", "tezlik", "aniqlik", "akademiya", "darslar",
-        "muvaffaqiyat", "tabriklaymiz", "rahmat", "marhamat", "doʻstlar"
-    )
-
-    val CYRILLIC_AUTO_FIX = mapOf(
-        "узбек" to "ўзбек", "узбекистон" to "ўзбекистон", "укиш" to "ўқиш",
-        "урганиш" to "ўрганиш", "тугри" to "тўғри", "булади" to "бўлади",
-        "кушимча" to "қўшимча", "суз" to "сўз", "йул" to "йўл",
-        "йук" to "йўқ", "голиб" to "ғолиб", "хаёт" to "ҳаёт",
-        "хамма" to "ҳамма", "рахмат" to "раҳмат", "шахар" to "шаҳар"
-    )
-
-    val CYRILLIC_DICTIONARY = listOf(
-        "ассалому", "алайкум", "ўзбекистон", "ўзбек", "тошкент", "янги",
-        "клавиатура", "дастур", "таълим", "маълумот", "яхши", "тўғри",
-        "бўлади", "учун", "билан", "ҳамда", "лекин", "шунингдек", "қўшимча",
-        "ишлаш", "ишонч", "ўқиш", "ўрганиш", "раҳмат", "марҳамат"
-    )
-
-    val QUICK_TRANSLATE = mapOf(
-        "assalomu alaykum" to Triple("Hello / Peace be upon you", "Selamün aleyküm / Merhaba", "Здравствуйте"),
-        "rahmat" to Triple("Thank you", "Teşekkür ederim", "Спасибо"),
-        "yaxşi" to Triple("Good / Well", "İyi / Güzel", "Хорошо"),
-        "ha" to Triple("Yes", "Evet", "Да"),
-        "yöq" to Triple("No", "Hayır / Yok", "Нет"),
-        "özbekiston" to Triple("Uzbekistan", "Özbekistan", "Узбекистан"),
-        "dastur" to Triple("Application", "Uygulama", "Программа"),
-        "klaviatura" to Triple("Keyboard", "Klavye", "Клавиатура"),
-        "taʼlim" to Triple("Education", "Eğitim", "Образование"),
-        "maʼlumot" to Triple("Information", "Bilgi", "Информация"),
-        "töğri" to Triple("Correct", "Doğru", "Правильно")
-    )
-
-    fun latinToCyrillic(text: String): String {
-        var s = text
-        val pairs = listOf(
-            "Oʻ" to "Ў", "oʻ" to "ў", "O'" to "Ў", "o'" to "ў", "Ö" to "Ў", "ö" to "ў",
-            "Gʻ" to "Ғ", "gʻ" to "ғ", "G'" to "Ғ", "g'" to "ғ", "Ğ" to "Ғ", "ğ" to "ғ",
-            "Sh" to "Ш", "SH" to "Ш", "sh" to "ш", "Ş" to "Ш", "ş" to "ш",
-            "Ch" to "Ч", "CH" to "Ч", "ch" to "ч", "Ç" to "Ч", "ç" to "ч",
-            "Yo" to "Ё", "yo" to "ё", "Yu" to "Ю", "yu" to "ю",
-            "Ya" to "Я", "ya" to "я", "Ye" to "Е", "ye" to "е",
-            "ʼ" to "ъ", "'" to "ъ"
-        )
-        for ((lat, cyr) in pairs) s = s.replace(lat, cyr)
-        val charMap = mapOf(
-            'A' to 'А', 'a' to 'а', 'B' to 'Б', 'b' to 'б', 'D' to 'Д', 'd' to 'д',
-            'E' to 'Э', 'e' to 'е', 'F' to 'Ф', 'f' to 'ф', 'G' to 'Г', 'g' to 'г',
-            'H' to 'Ҳ', 'h' to 'ҳ', 'I' to 'И', 'i' to 'и', 'J' to 'Ж', 'j' to 'ж',
-            'K' to 'К', 'k' to 'к', 'L' to 'Л', 'l' to 'л', 'M' to 'М', 'm' to 'м',
-            'N' to 'Н', 'n' to 'н', 'O' to 'О', 'o' to 'о', 'P' to 'П', 'p' to 'п',
-            'Q' to 'Қ', 'q' to 'қ', 'R' to 'Р', 'r' to 'р', 'S' to 'С', 's' to 'с',
-            'T' to 'Т', 't' to 'т', 'U' to 'У', 'u' to 'у', 'V' to 'В', 'v' to 'в',
-            'X' to 'Х', 'x' to 'х', 'Y' to 'Й', 'y' to 'й', 'Z' to 'З', 'z' to 'з'
-        )
-        val sb = StringBuilder()
-        for (c in s) sb.append(charMap[c] ?: c)
-        return sb.toString()
-    }
-
-    fun cyrillicToNewLatin(text: String): String {
-        val map = mapOf(
-            'А' to "A", 'а' to "a", 'Б' to "B", 'б' to "b", 'В' to "V", 'в' to "v",
-            'Г' to "G", 'г' to "g", 'Д' to "D", 'д' to "d", 'Е' to "E", 'е' to "e",
-            'Ё' to "Yo", 'ё' to "yo", 'Ж' to "J", 'ж' to "j", 'З' to "Z", 'з' to "z",
-            'И' to "I", 'и' to "i", 'Й' to "Y", 'й' to "y", 'К' to "K", 'к' to "k",
-            'Л' to "L", 'л' to "l", 'М' to "M", 'м' to "m", 'Н' to "N", 'н' to "n",
-            'О' to "O", 'о' to "o", 'П' to "P", 'п' to "p", 'Р' to "R", 'р' to "r",
-            'С' to "S", 'с' to "s", 'Т' to "T", 'т' to "t", 'У' to "U", 'у' to "u",
-            'Ф' to "F", 'ф' to "f", 'Х' to "X", 'х' to "x", 'Ц' to "Ts", 'ц' to "ts",
-            'Ч' to "Ç", 'ч' to "ç", 'Ш' to "Ş", 'ш' to "ş", 'Ъ' to "ʼ", 'ъ' to "ʼ",
-            'Ь' to "", 'ь' to "", 'Э' to "E", 'э' to "e", 'Ю' to "Yu", 'ю' to "yu",
-            'Я' to "Ya", 'я' to "ya", 'Ў' to "Ö", 'ў' to "ö", 'Қ' to "Q", 'қ' to "q",
-            'Ғ' to "Ğ", 'ғ' to "ğ", 'Ҳ' to "H", 'ҳ' to "h"
-        )
-        val sb = StringBuilder()
-        for (c in text) sb.append(map[c] ?: c.toString())
-        return sb.toString()
-    }
-}
-
-class TouchDotKeyView(
-    context: Context,
-    val rawKey: String,
-    val displayChar: String,
-    val subHint: String?,
-    val theme: KbTheme,
-    val textSp: Float
-) : View(context) {
-
-    var isPressedDown = false
-        set(value) {
-            field = value
-            invalidate()
-        }
-
-    private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = KbConfig.safeColor(theme.keyBg)
-    }
-    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.argb(75, 0, 0, 0)
-    }
-    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = KbConfig.safeColor(theme.keyText)
-        textAlign = Paint.Align.CENTER
-        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSp, resources.displayMetrics)
-    }
-    private val hintPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = KbConfig.safeColor(theme.keyText)
-        alpha = 135
-        textAlign = Paint.Align.RIGHT
-        typeface = Typeface.DEFAULT_BOLD
-        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 9.5f, resources.displayMetrics)
-    }
-    private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = if (theme.isLight) Color.argb(110, 100, 116, 139) else Color.argb(145, 148, 163, 184)
-    }
-    private val rect = RectF()
-    private val shadowRect = RectF()
-
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        val w = width.toFloat()
-        val h = height.toFloat()
-        val corner = dp(7f)
-
-        shadowRect.set(0f, dp(1.5f), w, h)
-        canvas.drawRoundRect(shadowRect, corner, corner, shadowPaint)
-
-        rect.set(0f, 0f, w, h - dp(1.5f))
-        canvas.drawRoundRect(rect, corner, corner, bgPaint)
-
-        if (isPressedDown) {
-            val radius = minOf(w, h) * 0.24f
-            canvas.drawCircle(w / 2f, (h - dp(1.5f)) / 2f, radius, dotPaint)
-        } else {
-            if (!subHint.isNullOrEmpty()) {
-                canvas.drawText(subHint, w - dp(4f), dp(11f), hintPaint)
-            }
-            val fm = textPaint.fontMetrics
-            val textY = (h - dp(1.5f)) / 2f - (fm.ascent + fm.descent) / 2f
-            canvas.drawText(displayChar, w / 2f, textY, textPaint)
-        }
-    }
-
-    private fun dp(v: Float): Float =
-        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, resources.displayMetrics)
-}
-
-class UzbekFKeyboardService : InputMethodService() {
-
-    private lateinit var prefs: SharedPreferences
-    private var rootContainer: FrameLayout? = null
-    private var isShifted = false
-    private var isCapsLock = false
-    private var lastShiftClickTime = 0L
-    private var lastSpaceClickTime = 0L
-    private var isPasswordInput = false
-
-    private var lastAutoReplacedOriginal: String? = null
-    private var lastAutoReplacedTarget: String? = null
-
-    private var keyPreviewPopup: PopupWindow? = null
-    private var keyPreviewCharTv: TextView? = null
-    private var keyPreviewDotsTv: TextView? = null
-    private var keyPreviewCard: LinearLayout? = null
-
-    private val deleteHandler = Handler(Looper.getMainLooper())
-    private var isDeleting = false
-
-    private val deleteRunnable = object : Runnable {
-        override fun run() {
-            if (isDeleting) {
-                handleBackspace()
-                vibrateKey(true)
-                deleteHandler.postDelayed(this, 55)
-            }
-        }
-    }
-
-    enum class ViewMode {
-        LETTERS, SYMBOLS_1, SYMBOLS_2, NUMPAD, EMOJI, QUICK_MENU, THEME_PICKER, TRANSLATOR
-    }
-    private var currentMode = ViewMode.LETTERS
-
-    override fun onCreate() {
-        super.onCreate()
-        prefs = getSharedPreferences(KbConfig.PREFS_NAME, Context.MODE_PRIVATE)
-    }
-
-    override fun onCreateInputView(): View {
-        val container = FrameLayout(this).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
-        rootContainer = container
-        renderKeyboardUI()
-        return container
-    }
-
-    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
-        super.onStartInputView(info, restarting)
-        dismissKeyPreview()
-        isPasswordInput = detectPasswordInput(info)
-        lastAutoReplacedOriginal = null
-        lastAutoReplacedTarget = null
-
-        if (info != null) {
-            val inputClass = info.inputType and InputType.TYPE_MASK_CLASS
-            currentMode = if (inputClass == InputType.TYPE_CLASS_NUMBER || inputClass == InputType.TYPE_CLASS_PHONE) {
-                ViewMode.NUMPAD
-            } else {
-                ViewMode.LETTERS
-            }
-        }
-        if (!isPasswordInput) updateShiftStateFromEditor()
-        if (rootContainer != null) renderKeyboardUI()
-    }
-
-    override fun onFinishInputView(finishingInput: Boolean) {
-        super.onFinishInputView(finishingInput)
-        dismissKeyPreview()
-    }
-
-    private fun detectPasswordInput(info: EditorInfo?): Boolean {
-        if (info == null) return false
-        val inputType = info.inputType
-        val variation = inputType and InputType.TYPE_MASK_VARIATION
-        val clazz = inputType and InputType.TYPE_MASK_CLASS
-
-        if (clazz == InputType.TYPE_CLASS_TEXT) {
-            if (variation == InputType.TYPE_TEXT_VARIATION_PASSWORD ||
-                variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
-                variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
-            ) return true
-        }
-        if (clazz == InputType.TYPE_CLASS_NUMBER && variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD) {
-            return true
-        }
-        return false
-    }
-
-    private fun getActiveTheme(): KbTheme {
-        val id = prefs.getString(KbConfig.KEY_THEME, "default_dark") ?: "default_dark"
-        return KbConfig.THEMES.find { it.id == id } ?: KbConfig.THEMES.first()
-    }
-
-    private fun getActiveLayout(): KbLayoutDef {
-        val id = prefs.getString(KbConfig.KEY_LAYOUT, "uz_f_v10") ?: "uz_f_v10"
-        return KbConfig.LAYOUTS.find { it.id == id } ?: KbConfig.LAYOUTS.first()
-    }
-
-    private fun showKeyPreviewBubble(anchor: View, text: String, hasAlts: Boolean, theme: KbTheme) {
-        if (!prefs.getBoolean(KbConfig.KEY_POPUP_PREVIEW, true) || isPasswordInput) return
-        try {
-            if (keyPreviewPopup == null) {
-                val card = LinearLayout(this).apply {
-                    orientation = LinearLayout.VERTICAL
-                    gravity = Gravity.CENTER
-                    setPadding(dp(12), dp(6), dp(12), dp(6))
-                }
-                val charTv = TextView(this).apply {
-                    gravity = Gravity.CENTER
-                    typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 27f)
-                }
-                val dotsTv = TextView(this).apply {
-                    text = "•••"
-                    gravity = Gravity.CENTER
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 9f)
-                }
-                card.addView(charTv)
-                card.addView(dotsTv)
-
-                keyPreviewCard = card
-                keyPreviewCharTv = charTv
-                keyPreviewDotsTv = dotsTv
-
-                keyPreviewPopup = PopupWindow(card, dp(56), dp(66), false).apply {
-                    isClippingEnabled = false
-                    isTouchable = false
-                }
-            }
-
-            val popBgColor = if (theme.isLight) Color.WHITE else KbConfig.safeColor("#3C4043")
-            keyPreviewCard?.background = GradientDrawable().apply {
-                setColor(popBgColor)
-                cornerRadius = dp(12).toFloat()
-                setStroke(dp(1), KbConfig.safeColor(theme.accentBg))
-            }
-            keyPreviewCharTv?.setTextColor(KbConfig.safeColor(theme.keyText))
-            keyPreviewCharTv?.text = text
-            keyPreviewDotsTv?.setTextColor(KbConfig.safeColor(theme.accentBg))
-            keyPreviewDotsTv?.visibility = if (hasAlts) View.VISIBLE else View.GONE
-
-            val loc = IntArray(2)
-            anchor.getLocationInWindow(loc)
-            val popupW = dp(56)
-            val popupH = dp(66)
-            val x = loc[0] + (anchor.width - popupW) / 2
-            val y = (loc[1] - popupH + dp(4)).coerceAtLeast(0)
-
-            val popup = keyPreviewPopup!!
-            if (popup.isShowing) {
-                popup.update(x, y, popupW, popupH)
-            } else {
-                popup.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y)
-            }
-        } catch (_: Exception) {}
-    }
-
-    private fun dismissKeyPreview() {
-        try {
-            keyPreviewPopup?.dismiss()
-        } catch (_: Exception) {}
-    }
-
-    fun renderKeyboardUI() {
-        val container = rootContainer ?: return
-        dismissKeyPreview()
-        container.removeAllViews()
-        val theme = getActiveTheme()
-        val oneHanded = prefs.getBoolean(KbConfig.KEY_ONE_HANDED, false)
-
-        val outerWrapper = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setBackgroundColor(KbConfig.safeColor(theme.boardBg))
-            layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
-
-        val mainBoard = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(KbConfig.safeColor(theme.boardBg))
-            setPadding(dp(3), dp(4), dp(3), dp(8))
-            layoutParams = LinearLayout.LayoutParams(
-                0,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                if (oneHanded) 0.82f else 1.0f
-            )
-        }
-
-        mainBoard.addView(buildTopToolbar(theme))
-        mainBoard.addView(buildSuggestionsStrip(theme))
-
-        when (currentMode) {
-            ViewMode.LETTERS -> buildLettersView(mainBoard, theme)
-            ViewMode.SYMBOLS_1 -> buildSymbolsView1(mainBoard, theme)
-            ViewMode.SYMBOLS_2 -> buildSymbolsView2(mainBoard, theme)
-            ViewMode.NUMPAD -> buildNumpadView(mainBoard, theme)
-            ViewMode.EMOJI -> buildEmojiView(mainBoard, theme)
-            ViewMode.QUICK_MENU -> buildQuickMenuView(mainBoard, theme)
-            ViewMode.THEME_PICKER -> buildThemePickerView(mainBoard, theme)
-            ViewMode.TRANSLATOR -> buildTranslatorView(mainBoard, theme)
-        }
-
-        outerWrapper.addView(mainBoard)
-
-        if (oneHanded) {
-            val sideBar = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 0.18f)
-            }
-            val expandBtn = Button(this).apply {
-                text = "⤢"
-                setTextColor(KbConfig.safeColor(theme.keyText))
-                background = roundedBg(theme.specKeyBg, 16f)
-                setOnClickListener {
-                    vibrateKey()
-                    prefs.edit().putBoolean(KbConfig.KEY_ONE_HANDED, false).apply()
-                    renderKeyboardUI()
-                }
-            }
-            sideBar.addView(expandBtn, LinearLayout.LayoutParams(dp(44), dp(44)))
-            outerWrapper.addView(sideBar)
-        }
-
-        container.addView(outerWrapper)
-    }
-
-    private fun buildTopToolbar(theme: KbTheme): View {
-        val bar = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(6), dp(2), dp(6), dp(3))
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(38))
-        }
-
-        fun toolBtn(icon: String, isActive: Boolean = false, onClick: () -> Unit): View {
-            return Button(this).apply {
-                text = icon
-                isAllCaps = false
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-                setTextColor(if (isActive) KbConfig.safeColor(theme.accentText) else KbConfig.safeColor(theme.keyText))
-                setPadding(0, 0, 0, 0)
-                background = if (isActive) roundedBg(theme.accentBg, 18f) else GradientDrawable().apply { setColor(Color.TRANSPARENT) }
-                layoutParams = LinearLayout.LayoutParams(0, dp(32), 1f).apply { setMargins(dp(2), 0, dp(2), 0) }
-                setOnClickListener {
-                    vibrateKey()
-                    onClick()
-                }
-            }
-        }
-
-        bar.addView(toolBtn(if (currentMode == ViewMode.QUICK_MENU) "✕" else "⊞", currentMode == ViewMode.QUICK_MENU) {
-            currentMode = if (currentMode == ViewMode.QUICK_MENU) ViewMode.LETTERS else ViewMode.QUICK_MENU
-            renderKeyboardUI()
-        })
-        bar.addView(toolBtn("😊", currentMode == ViewMode.EMOJI) {
-            currentMode = if (currentMode == ViewMode.EMOJI) ViewMode.LETTERS else ViewMode.EMOJI
-            renderKeyboardUI()
-        })
-        bar.addView(toolBtn("🎨", currentMode == ViewMode.THEME_PICKER) {
-            currentMode = if (currentMode == ViewMode.THEME_PICKER) ViewMode.LETTERS else ViewMode.THEME_PICKER
-            renderKeyboardUI()
-        })
-        bar.addView(toolBtn("G文", currentMode == ViewMode.TRANSLATOR) {
-            currentMode = if (currentMode == ViewMode.TRANSLATOR) ViewMode.LETTERS else ViewMode.TRANSLATOR
-            renderKeyboardUI()
-        })
-        bar.addView(toolBtn("📋") { pasteFromClipboard() })
-        bar.addView(toolBtn("⌨️") { cycleNextLayout() })
-        bar.addView(toolBtn("⚙️") { openSettingsApp() })
-
-        return bar
-    }
-
-    private fun buildSuggestionsStrip(theme: KbTheme): View {
-        val strip = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(6), dp(2), dp(6), dp(4))
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(38))
-        }
-
-        if (isPasswordInput) {
-            val shieldPill = TextView(this).apply {
-                text = "🔒 Maxfiy parol rejimi  ••••••••"
-                setTextColor(KbConfig.safeColor(theme.accentBg))
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
-                typeface = Typeface.DEFAULT_BOLD
-                gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            }
-            strip.addView(shieldPill)
-            return strip
-        }
-
-        val currentWord = getCurrentWordBeingTyped()
-
-        if (currentWord.isEmpty() && lastAutoReplacedOriginal != null && lastAutoReplacedTarget != null) {
-            val orig = lastAutoReplacedOriginal!!
-            val targ = lastAutoReplacedTarget!!
-            val undoBtn = Button(this).apply {
-                text = "↶ Geri al ($orig)"
-                isAllCaps = false
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
-                setTextColor(KbConfig.safeColor(theme.keyText))
-                background = roundedBg(theme.keyBg, 16f)
-                setPadding(dp(16), 0, dp(16), 0)
-                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(30)).apply {
-                    gravity = Gravity.CENTER
-                }
-                setOnClickListener {
-                    vibrateKey()
-                    undoLastAutoReplace(orig, targ)
-                }
-            }
-            strip.gravity = Gravity.CENTER
-            strip.addView(undoBtn)
-            return strip
-        }
-
-        val suggestions = computeSuggestions(currentWord)
-        suggestions.take(3).forEachIndexed { idx, word ->
-            val isPrimary = idx == 0 && currentWord.isNotEmpty() && word.lowercase() != currentWord.lowercase()
-            val chip = Button(this).apply {
-                text = if (isPrimary) "✨ $word" else word
-                isAllCaps = false
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-                typeface = if (idx == 0) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
-                setTextColor(if (isPrimary) KbConfig.safeColor(theme.accentText) else KbConfig.safeColor(theme.keyText))
-                background = if (isPrimary) roundedBg(theme.accentBg, 10f) else roundedBg(theme.specKeyBg, 8f)
-                setPadding(dp(8), 0, dp(8), 0)
-                layoutParams = LinearLayout.LayoutParams(0, dp(30), 1f).apply {
-                    setMargins(dp(3), 0, dp(3), 0)
-                }
-                setOnClickListener {
-                    vibrateKey()
-                    replaceCurrentWordWith(word, saveUndo = currentWord.isNotEmpty())
-                }
-            }
-            strip.addView(chip)
-        }
-        return strip
-    }
-
-    private fun getCurrentWordBeingTyped(): String {
-        if (isPasswordInput) return ""
-        val ic = currentInputConnection ?: return ""
-        val before = ic.getTextBeforeCursor(35, 0)?.toString() ?: return ""
-        val lastSpace = before.indexOfLast { it.isWhitespace() || it in ".,!?;:()\"-" }
-        return if (lastSpace == -1) before else before.substring(lastSpace + 1)
-    }
-
-    private fun computeSuggestions(word: String): List<String> {
-        val layout = getActiveLayout()
-        if (word.isBlank()) {
-            return if (layout.isCyrillic) listOf("ассалому", "ўзбекистон", "яхши")
-            else listOf("assalomu", "özbekiston", "yaxşi")
-        }
-        val lower = word.lowercase()
-        val isCapitalized = word.first().isUpperCase()
-        val results = mutableListOf<String>()
-
-        if (layout.isCyrillic) {
-            KbConfig.CYRILLIC_AUTO_FIX[lower]?.let { results.add(it) }
-            val converted = KbConfig.latinToCyrillic(lower)
-            if (converted != lower) results.add(converted)
-            KbConfig.CYRILLIC_DICTIONARY.filter { it.startsWith(lower) && it !in results }
-                .take(3).forEach { results.add(it) }
-        } else {
-            KbConfig.AUTO_FIX_MAP[lower]?.let { results.add(it) }
-            val converted = lower
-                .replace("o'", "ö").replace("oʻ", "ö")
-                .replace("g'", "ğ").replace("gʻ", "ğ")
-                .replace("sh", "ş").replace("ch", "ç")
-            if (converted != lower && converted !in results) results.add(converted)
-            KbConfig.DICTIONARY_WORDS.filter { it.startsWith(lower) || it.startsWith(converted) }
-                .distinct().filter { it !in results }.take(3).forEach { results.add(it) }
-        }
-
-        if (lower !in results) results.add(lower)
-        return results.take(3).map { w ->
-            if (isCapitalized) w.replaceFirstChar { it.uppercase() } else w
-        }
-    }
-
-    private fun replaceCurrentWordWith(newWord: String, saveUndo: Boolean = false) {
-        val ic = currentInputConnection ?: return
-        val cur = getCurrentWordBeingTyped()
-        if (cur.isNotEmpty()) {
-            if (saveUndo && cur != newWord) {
-                lastAutoReplacedOriginal = cur
-                lastAutoReplacedTarget = newWord
-            }
-            ic.deleteSurroundingText(cur.length, 0)
-        }
-        ic.commitText("$newWord ", 1)
-        updateShiftStateFromEditor()
-        renderKeyboardUI()
-    }
-
-    private fun undoLastAutoReplace(original: String, target: String) {
-        val ic = currentInputConnection ?: return
-        val before = ic.getTextBeforeCursor(target.length + 2, 0)?.toString() ?: ""
-        if (before.endsWith("$target ")) {
-            ic.deleteSurroundingText(target.length + 1, 0)
-            ic.commitText("$original ", 1)
-        } else if (before.endsWith(target)) {
-            ic.deleteSurroundingText(target.length, 0)
-            ic.commitText(original, 1)
-        }
-        lastAutoReplacedOriginal = null
-        lastAutoReplacedTarget = null
-        renderKeyboardUI()
-    }
-
-    private fun buildLettersView(board: LinearLayout, theme: KbTheme) {
-        val layoutDef = getActiveLayout()
-        val showNumRow = prefs.getBoolean(KbConfig.KEY_NUM_ROW, true)
-        val fontScalePct = prefs.getInt(KbConfig.KEY_FONT_SCALE, 130)
-        val fontScale = fontScalePct / 100f
-        val heightScale = prefs.getInt(KbConfig.KEY_KEY_HEIGHT, 115) / 100f
-        val keyHeightDp = (46 * heightScale).toInt().coerceIn(42, 68)
-
-        if (showNumRow) {
-            val numRow = createRowLayout(dp(38))
-            listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0").forEach { n ->
-                numRow.addView(createTouchDotCharKey(n, null, theme, 1f, 15.5f * fontScale))
-            }
-            board.addView(numRow)
-        }
-
-        val row1 = createRowLayout(dp(keyHeightDp))
-        val r1Keys = layoutDef.rows[0]
-        val baseSp1 = if (r1Keys.size > 10) 15.5f else 17.5f
-        r1Keys.forEach { k ->
-            val hint = KbConfig.POPUP_ALTS[k]?.firstOrNull()
-            row1.addView(createTouchDotCharKey(k, hint, theme, 1f, baseSp1 * fontScale))
-        }
-        board.addView(row1)
-
-        val row2 = createRowLayout(dp(keyHeightDp))
-        val r2Keys = layoutDef.rows[1]
-        val baseSp2 = if (r2Keys.size > 10) 15.5f else 17.5f
-        r2Keys.forEach { k ->
-            val hint = KbConfig.POPUP_ALTS[k]?.firstOrNull()
-            row2.addView(createTouchDotCharKey(k, hint, theme, 1f, baseSp2 * fontScale))
-        }
-        board.addView(row2)
-
-        val row3 = createRowLayout(dp(keyHeightDp))
-        val shiftLabel = when {
-            isCapsLock -> "⇪"
-            isShifted -> "⬆️"
-            else -> "⇧"
-        }
-        val shiftBg = if (isShifted || isCapsLock) theme.accentBg else theme.specKeyBg
-        val shiftTxt = if (isShifted || isCapsLock) theme.accentText else theme.keyText
-        row3.addView(createActionKey(shiftLabel, shiftBg, shiftTxt, 1.35f) { handleShiftPress() })
-
-        val r3Keys = layoutDef.rows[2]
-        val baseSp3 = if (r3Keys.size > 9) 15f else 17.5f
-        r3Keys.forEach { k ->
-            val hint = KbConfig.POPUP_ALTS[k]?.firstOrNull()
-            row3.addView(createTouchDotCharKey(k, hint, theme, 1f, baseSp3 * fontScale))
-        }
-
-        row3.addView(createRepeatableBackspaceKey(theme, 1.35f))
-        board.addView(row3)
-        board.addView(buildBottomActionRow(theme, layoutDef.badge))
-    }
-
-    private fun createTouchDotCharKey(
-        rawKey: String,
-        subHint: String?,
-        theme: KbTheme,
-        weight: Float,
-        textSp: Float
-    ): View {
-        val displayChar = if (isShifted || isCapsLock) rawKey.uppercase() else rawKey
-        val alts = KbConfig.POPUP_ALTS[rawKey]
-        val keyView = TouchDotKeyView(this, rawKey, displayChar, subHint, theme, textSp.coerceIn(14f, 34f))
-
-        keyView.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight).apply {
-            setMargins(dp(2), dp(2), dp(2), dp(2))
-        }
-
-        var longPressed = false
-        val longPressHandler = Handler(Looper.getMainLooper())
-        val longPressRunnable = Runnable {
-            if (!alts.isNullOrEmpty()) {
-                longPressed = true
-                vibrateKey()
-                val altChar = alts.first()
-                val outAlt = if (isShifted || isCapsLock) altChar.uppercase() else altChar
-                showKeyPreviewBubble(keyView, outAlt, false, theme)
-                commitCharacter(altChar)
-            }
-        }
-
-        keyView.setOnTouchListener { v, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    longPressed = false
-                    keyView.isPressedDown = true
-                    vibrateKey()
-                    showKeyPreviewBubble(v, displayChar, !alts.isNullOrEmpty(), theme)
-                    longPressHandler.postDelayed(longPressRunnable, 370)
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    longPressHandler.removeCallbacks(longPressRunnable)
-                    keyView.isPressedDown = false
-                    dismissKeyPreview()
-                    if (!longPressed) {
-                        commitCharacter(rawKey)
-                    }
-                    true
-                }
-                MotionEvent.ACTION_CANCEL -> {
-                    longPressHandler.removeCallbacks(longPressRunnable)
-                    keyView.isPressedDown = false
-                    dismissKeyPreview()
-                    true
-                }
-                else -> false
-            }
-        }
-        return keyView
-    }
-
-    private fun buildTranslatorView(board: LinearLayout, theme: KbTheme) {
-        val box = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(8), dp(4), dp(8), dp(8))
-        }
-
-        val header = TextView(this).apply {
-            text = "G文  Aqlli Tarjimon va Alifbo Oʻgirgich"
-            setTextColor(KbConfig.safeColor(theme.keyText))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)
-            typeface = Typeface.DEFAULT_BOLD
-            setPadding(dp(4), dp(2), dp(4), dp(6))
-        }
-        box.addView(header)
-
-        val ic = currentInputConnection
-        val fullBefore = ic?.getTextBeforeCursor(250, 0)?.toString()?.trim() ?: ""
-        val sampleText = if (fullBefore.isNotEmpty()) fullBefore else "assalomu alaykum"
-
-        val quickHit = KbConfig.QUICK_TRANSLATE[sampleText.lowercase()]
-        val previewCard = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            background = roundedBg(theme.specKeyBg, 12f)
-            setPadding(dp(12), dp(8), dp(12), dp(8))
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                setMargins(0, 0, 0, dp(8))
-            }
-        }
-
-        val srcLabel = TextView(this).apply {
-            text = "Matn: \"$sampleText\""
-            setTextColor(KbConfig.safeColor(theme.accentBg))
-            typeface = Typeface.DEFAULT_BOLD
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-        }
-        previewCard.addView(srcLabel)
-
-        if (quickHit != null) {
-            val (en, tr, ru) = quickHit
-            val transRow = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                setPadding(0, dp(6), 0, 0)
-            }
-            listOf("🇬🇧 $en" to en, "🇹🇷 $tr" to tr, "🇷🇺 $ru" to ru).forEach { (lbl, valTxt) ->
-                val b = Button(this).apply {
-                    text = lbl
-                    isAllCaps = false
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
-                    setTextColor(KbConfig.safeColor(theme.keyText))
-                    background = roundedBg(theme.keyBg, 8f)
-                    layoutParams = LinearLayout.LayoutParams(0, dp(34), 1f).apply { setMargins(dp(2), 0, dp(2), 0) }
-                    setOnClickListener {
-                        vibrateKey()
-                        if (fullBefore.isNotEmpty()) ic?.deleteSurroundingText(fullBefore.length, 0)
-                        ic?.commitText(valTxt, 1)
-                        currentMode = ViewMode.LETTERS
-                        renderKeyboardUI()
-                    }
-                }
-                transRow.addView(b)
-            }
-            previewCard.addView(transRow)
-        }
-        box.addView(previewCard)
-
-        val convRow = createRowLayout(dp(44))
-        convRow.addView(createActionKey("🔄 Matnni КИРИЛЛga oʻgirish", theme.keyBg, theme.keyText, 1f) {
-            if (fullBefore.isNotEmpty()) {
-                val cyr = KbConfig.latinToCyrillic(fullBefore)
-                ic?.deleteSurroundingText(fullBefore.length, 0)
-                ic?.commitText(cyr, 1)
-                currentMode = ViewMode.LETTERS
-                renderKeyboardUI()
-            }
-        })
-        convRow.addView(createActionKey("🔄 Matnni YANGI LOTINga oʻgirish", theme.keyBg, theme.keyText, 1f) {
-            if (fullBefore.isNotEmpty()) {
-                val lat = KbConfig.cyrillicToNewLatin(fullBefore)
-                ic?.deleteSurroundingText(fullBefore.length, 0)
-                ic?.commitText(lat, 1)
-                currentMode = ViewMode.LETTERS
-                renderKeyboardUI()
-            }
-        })
-        box.addView(convRow)
-
-        val externalRow = createRowLayout(dp(44))
-        externalRow.addView(createActionKey("🇺🇿 Tilmoch AI da tarjima", theme.accentBg, theme.accentText, 1f) {
-            openExternalUrl("https://tilmoch.ai")
-        })
-        externalRow.addView(createActionKey("🌐 Google Translate", theme.specKeyBg, theme.keyText, 1f) {
-            val encoded = Uri.encode(sampleText)
-            openExternalUrl("https://translate.google.com/?sl=uz&tl=en&text=$encoded&op=translate")
-        })
-        box.addView(externalRow)
-
-        val backRow = createRowLayout(dp(40))
-        backRow.addView(createActionKey("⬅️ Klaviaturaga qaytish (ABC)", theme.specKeyBg, theme.keyText, 1f) {
-            currentMode = ViewMode.LETTERS
-            renderKeyboardUI()
-        })
-        box.addView(backRow)
-        board.addView(box)
-    }
-
-    private fun openExternalUrl(url: String) {
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(intent)
-        } catch (_: Exception) {}
-    }
-
-    private fun buildSymbolsView1(board: LinearLayout, theme: KbTheme) {
-        val rows = listOf(
-            listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
-            listOf("@", "#", "₺", "_", "&", "-", "+", "(", ")", "/"),
-            listOf("=\\<", "*", "\"", "'", ":", ";", "!", "?", "⌫")
-        )
-        rows.forEach { r ->
-            val rowLayout = createRowLayout(dp(46))
-            r.forEach { token ->
-                when (token) {
-                    "=\\<" -> rowLayout.addView(createActionKey("=\\<", theme.specKeyBg, theme.keyText, 1.3f) {
-                        currentMode = ViewMode.SYMBOLS_2
-                        renderKeyboardUI()
-                    })
-                    "⌫" -> rowLayout.addView(createRepeatableBackspaceKey(theme, 1.3f))
-                    else -> rowLayout.addView(createTouchDotCharKey(token, null, theme, 1f, 18f))
-                }
-            }
-            board.addView(rowLayout)
-        }
-        board.addView(buildSymbolsBottomRow(theme))
-    }
-
-    private fun buildSymbolsView2(board: LinearLayout, theme: KbTheme) {
-        val rows = listOf(
-            listOf("~", "`", "|", "•", "√", "π", "÷", "×", "§", "Δ"),
-            listOf("£", "€", "$", "¢", "^", "°", "=", "{", "}", "\\"),
-            listOf("?123", "%", "©", "®", "™", "✓", "[", "]", "⌫")
-        )
-        rows.forEach { r ->
-            val rowLayout = createRowLayout(dp(46))
-            r.forEach { token ->
-                when (token) {
-                    "?123" -> rowLayout.addView(createActionKey("?123", theme.specKeyBg, theme.keyText, 1.3f) {
-                        currentMode = ViewMode.SYMBOLS_1
-                        renderKeyboardUI()
-                    })
-                    "⌫" -> rowLayout.addView(createRepeatableBackspaceKey(theme, 1.3f))
-                    else -> rowLayout.addView(createTouchDotCharKey(token, null, theme, 1f, 18f))
-                }
-            }
-            board.addView(rowLayout)
-        }
-        board.addView(buildSymbolsBottomRow(theme))
-    }
-
-    private fun buildNumpadView(board: LinearLayout, theme: KbTheme) {
-        val gridRows = listOf(
-            listOf("+", "1", "2", "3", "%"),
-            listOf("-", "4", "5", "6", "␣"),
-            listOf("*", "7", "8", "9", "⌫"),
-            listOf("ABC", ",", "0", "=", "⏎")
-        )
-        gridRows.forEach { r ->
-            val rowLayout = createRowLayout(dp(50))
-            r.forEach { token ->
-                when (token) {
-                    "ABC" -> rowLayout.addView(createActionKey("ABC", theme.specKeyBg, theme.keyText, 1f) {
-                        currentMode = ViewMode.LETTERS
-                        renderKeyboardUI()
-                    })
-                    "␣" -> rowLayout.addView(createActionKey("␣", theme.specKeyBg, theme.keyText, 1f) {
-                        currentInputConnection?.commitText(" ", 1)
-                    })
-                    "⌫" -> rowLayout.addView(createRepeatableBackspaceKey(theme, 1f))
-                    "⏎" -> rowLayout.addView(createActionKey("🔍", theme.accentBg, theme.accentText, 1f) { handleEnter() })
-                    else -> {
-                        val weight = if (token in listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")) 1.35f else 0.9f
-                        rowLayout.addView(createTouchDotCharKey(token, null, theme, weight, 21f))
-                    }
-                }
-            }
-            board.addView(rowLayout)
-        }
-    }
-
-    private fun buildEmojiView(board: LinearLayout, theme: KbTheme) {
-        val header = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(8), dp(4), dp(8), dp(4))
-        }
-        header.addView(createActionKey("← ABC", theme.specKeyBg, theme.keyText, 0.3f) {
-            currentMode = ViewMode.LETTERS
-            renderKeyboardUI()
-        })
-        val title = TextView(this).apply {
-            text = "  Emojilar"
-            setTextColor(KbConfig.safeColor(theme.keyText))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            typeface = Typeface.DEFAULT_BOLD
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.5f)
-        }
-        header.addView(title)
-        header.addView(createRepeatableBackspaceKey(theme, 0.2f))
-        board.addView(header)
-
-        KbConfig.EMOJIS.chunked(8).take(4).forEach { chunk ->
-            val r = createRowLayout(dp(44))
-            chunk.forEach { em ->
-                r.addView(createActionKey(em, theme.keyBg, theme.keyText, 1f) {
-                    currentInputConnection?.commitText(em, 1)
-                })
-            }
-            board.addView(r)
-        }
-    }
-
-    private fun buildQuickMenuView(board: LinearLayout, theme: KbTheme) {
-        val grid = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(8), dp(6), dp(8), dp(6))
-        }
-
-        fun tilePair(t1: String, act1: () -> Unit, t2: String, act2: () -> Unit): LinearLayout {
-            val row = createRowLayout(dp(50))
-            row.addView(createActionKey(t1, theme.keyBg, theme.keyText, 1f, act1))
-            row.addView(createActionKey(t2, theme.keyBg, theme.keyText, 1f, act2))
-            return row
-        }
-
-        val curScale = prefs.getInt(KbConfig.KEY_FONT_SCALE, 130)
-        val vibOn = prefs.getBoolean(KbConfig.KEY_VIBRATE_ENABLED, true)
-
-        grid.addView(tilePair(
-            "🔤 Harf: ${curScale}%", {
-                val next = when {
-                    curScale < 130 -> 130
-                    curScale < 155 -> 155
-                    curScale < 185 -> 185
-                    else -> 115
-                }
-                prefs.edit().putInt(KbConfig.KEY_FONT_SCALE, next).apply()
-                currentMode = ViewMode.LETTERS
-                renderKeyboardUI()
-            },
-            "🎨 Mavzular", { currentMode = ViewMode.THEME_PICKER; renderKeyboardUI() }
-        ))
-        grid.addView(tilePair(
-            "⌨️ Maket: ${getActiveLayout().badge}", { cycleNextLayout() },
-            "G文 Tarjima & Kirill", { currentMode = ViewMode.TRANSLATOR; renderKeyboardUI() }
-        ))
-        grid.addView(tilePair(
-            if (vibOn) "📳 Vibratsiya: ON" else "📴 Vibratsiya: OFF", {
-                prefs.edit().putBoolean(KbConfig.KEY_VIBRATE_ENABLED, !vibOn).apply()
-                renderKeyboardUI()
-            },
-            "⚙️ Sozlamalar", { openSettingsApp() }
-        ))
-
-        board.addView(grid)
-    }
-
-    private fun buildThemePickerView(board: LinearLayout, theme: KbTheme) {
-        val wrap = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(8), dp(4), dp(8), dp(4))
-        }
-        KbConfig.THEMES.chunked(3).forEach { group ->
-            val row = createRowLayout(dp(44))
-            group.forEach { t ->
-                val active = t.id == theme.id
-                val label = if (active) "✓ ${t.name}" else t.name
-                row.addView(createActionKey(label, t.keyBg, t.keyText, 1f) {
-                    prefs.edit().putString(KbConfig.KEY_THEME, t.id).apply()
-                    currentMode = ViewMode.LETTERS
-                    renderKeyboardUI()
-                })
-            }
-            wrap.addView(row)
-        }
-        board.addView(wrap)
-    }
-
-    private fun buildBottomActionRow(theme: KbTheme, spaceLabel: String): View {
-        val row = createRowLayout(dp(46))
-        val showComma = prefs.getBoolean(KbConfig.KEY_COMMA_KEY, true)
-        val showEmoji = prefs.getBoolean(KbConfig.KEY_EMOJI_KEY, true)
-        val showLang = prefs.getBoolean(KbConfig.KEY_LANG_KEY, true)
-        val showPeriod = prefs.getBoolean(KbConfig.KEY_PERIOD_KEY, true)
-
-        row.addView(createActionKey("?123", theme.specKeyBg, theme.keyText, 1.3f) {
-            currentMode = ViewMode.SYMBOLS_1
-            renderKeyboardUI()
-        })
-        if (showComma) row.addView(createTouchDotCharKey(",", null, theme, 0.85f, 18f))
-        if (showEmoji) {
-            row.addView(createActionKey("😊", theme.specKeyBg, theme.keyText, 0.9f) {
-                currentMode = ViewMode.EMOJI
-                renderKeyboardUI()
-            })
-        }
-        if (showLang) {
-            row.addView(createActionKey("🌐", theme.specKeyBg, theme.keyText, 0.9f) {
-                cycleNextLayout()
-            })
-        }
-
-        val spaceBtn = createActionKey(spaceLabel, theme.keyBg, theme.keyText, 3.6f) { handleSpace() }
-        spaceBtn.setOnLongClickListener {
-            vibrateKey()
-            cycleNextLayout()
-            true
-        }
-        row.addView(spaceBtn)
-
-        if (showPeriod) row.addView(createTouchDotCharKey(".", "?", theme, 0.85f, 18f))
-        row.addView(createActionKey("⏎", theme.accentBg, theme.accentText, 1.45f) { handleEnter() })
-        return row
-    }
-
-    private fun buildSymbolsBottomRow(theme: KbTheme): View {
-        val row = createRowLayout(dp(46))
-        row.addView(createActionKey("ABC", theme.specKeyBg, theme.keyText, 1.3f) {
-            currentMode = ViewMode.LETTERS
-            renderKeyboardUI()
-        })
-        row.addView(createTouchDotCharKey(",", null, theme, 0.9f, 18f))
-        row.addView(createActionKey("1234", theme.specKeyBg, theme.keyText, 1.1f) {
-            currentMode = ViewMode.NUMPAD
-            renderKeyboardUI()
-        })
-        row.addView(createActionKey(getActiveLayout().badge, theme.keyBg, theme.keyText, 3.5f) { handleSpace() })
-        row.addView(createTouchDotCharKey(".", null, theme, 0.9f, 18f))
-        row.addView(createActionKey("⏎", theme.accentBg, theme.accentText, 1.4f) { handleEnter() })
-        return row
-    }
-
-    private fun createRowLayout(heightPx: Int): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, heightPx).apply {
-                setMargins(0, dp(2), 0, dp(2))
-            }
-        }
-    }
-
-    private fun createActionKey(
-        label: String,
-        bgHex: String,
-        txtHex: String,
-        weight: Float,
-        onClick: () -> Unit
-    ): Button {
-        return Button(this).apply {
-            text = label
-            isAllCaps = false
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(KbConfig.safeColor(txtHex))
-            setPadding(dp(2), 0, dp(2), 0)
-            background = roundedBg(bgHex, 8f)
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight).apply {
-                setMargins(dp(2), dp(1), dp(2), dp(1))
-            }
-            setOnClickListener {
-                vibrateKey()
-                onClick()
-            }
-        }
-    }
-
-    private fun createRepeatableBackspaceKey(theme: KbTheme, weight: Float): Button {
-        return Button(this).apply {
-            text = "⌫"
-            isAllCaps = false
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
-            setTextColor(KbConfig.safeColor(theme.keyText))
-            background = roundedBg(theme.specKeyBg, 8f)
-            setPadding(0, 0, 0, 0)
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight).apply {
-                setMargins(dp(2), dp(1), dp(2), dp(1))
-            }
-            setOnTouchListener { _, event ->
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        vibrateKey()
-                        handleBackspace()
-                        isDeleting = true
-                        deleteHandler.postDelayed(deleteRunnable, 380)
-                        true
-                    }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        isDeleting = false
-                        deleteHandler.removeCallbacks(deleteRunnable)
-                        true
-                    }
-                    else -> false
-                }
-            }
-        }
-    }
-
-    private fun commitCharacter(raw: String) {
-        val ic = currentInputConnection ?: return
-        val out = if (isShifted || isCapsLock) raw.uppercase() else raw
-        lastAutoReplacedOriginal = null
-        lastAutoReplacedTarget = null
-        ic.commitText(out, 1)
-
-        if (isShifted && !isCapsLock) {
-            isShifted = false
-        }
-        renderKeyboardUI()
-    }
-
-    private fun handleShiftPress() {
-        val now = System.currentTimeMillis()
-        if (now - lastShiftClickTime < 320) {
-            isCapsLock = true
-            isShifted = true
-        } else if (isCapsLock) {
-            isCapsLock = false
-            isShifted = false
-        } else {
-            isShifted = !isShifted
-        }
-        lastShiftClickTime = now
-        renderKeyboardUI()
-    }
-
-    private fun handleBackspace() {
-        val ic = currentInputConnection ?: return
-        val selected = ic.getSelectedText(0)
-        if (!selected.isNullOrEmpty()) {
-            ic.commitText("", 1)
-        } else {
-            ic.deleteSurroundingText(1, 0)
-        }
-        updateShiftStateFromEditor()
-        renderKeyboardUI()
-    }
-
-    private fun handleSpace() {
-        val ic = currentInputConnection ?: return
-        val autoCorrect = prefs.getBoolean(KbConfig.KEY_AUTO_CORRECT, true)
-
-        if (autoCorrect && !isPasswordInput && currentMode == ViewMode.LETTERS) {
-            val curWord = getCurrentWordBeingTyped()
-            if (curWord.length >= 2) {
-                val lower = curWord.lowercase()
-                val layout = getActiveLayout()
-                val fixed = if (layout.isCyrillic) KbConfig.CYRILLIC_AUTO_FIX[lower] else KbConfig.AUTO_FIX_MAP[lower]
-                if (fixed != null && fixed != lower) {
-                    val outWord = if (curWord.first().isUpperCase()) fixed.replaceFirstChar { it.uppercase() } else fixed
-                    lastAutoReplacedOriginal = curWord
-                    lastAutoReplacedTarget = outWord
-                    ic.deleteSurroundingText(curWord.length, 0)
-                    ic.commitText("$outWord ", 1)
-                    updateShiftStateFromEditor()
-                    renderKeyboardUI()
-                    return
-                }
-            }
-        }
-
-        val now = System.currentTimeMillis()
-        if (now - lastSpaceClickTime < 280 && !isPasswordInput) {
-            val before = ic.getTextBeforeCursor(2, 0) ?: ""
-            if (before.endsWith(" ") && before.length == 2 && before[0].isLetterOrDigit()) {
-                ic.deleteSurroundingText(1, 0)
-                ic.commitText(". ", 1)
-                lastSpaceClickTime = 0L
-                updateShiftStateFromEditor()
-                renderKeyboardUI()
-                return
-            }
-        }
-        lastSpaceClickTime = now
-        ic.commitText(" ", 1)
-        updateShiftStateFromEditor()
-        renderKeyboardUI()
-    }
-
-    private fun handleEnter() {
-        val ic = currentInputConnection ?: return
-        val info = currentInputEditorInfo
-        val action = info?.imeOptions?.and(EditorInfo.IME_MASK_ACTION) ?: EditorInfo.IME_ACTION_NONE
-        if (action != EditorInfo.IME_ACTION_NONE && action != EditorInfo.IME_ACTION_UNSPECIFIED) {
-            ic.performEditorAction(action)
-        } else {
-            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
-            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
-        }
-    }
-
-    private fun cycleNextLayout() {
-        val curId = getActiveLayout().id
-        val idx = KbConfig.LAYOUTS.indexOfFirst { it.id == curId }
-        val next = KbConfig.LAYOUTS[(idx + 1) % KbConfig.LAYOUTS.size]
-        prefs.edit().putString(KbConfig.KEY_LAYOUT, next.id).apply()
-        currentMode = ViewMode.LETTERS
-        Toast.makeText(this, "Maket: ${next.title}", Toast.LENGTH_SHORT).show()
-        renderKeyboardUI()
-    }
-
-    private fun pasteFromClipboard() {
-        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
-        val item = cm.primaryClip?.getItemAt(0)?.text?.toString()
-        if (!item.isNullOrEmpty()) {
-            currentInputConnection?.commitText(item, 1)
-        } else {
-            Toast.makeText(this, "Bufer boʻsh", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun openSettingsApp() {
-        try {
-            val intent = Intent(this, SetupActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(intent)
-        } catch (_: Exception) {}
-    }
-
-    private fun updateShiftStateFromEditor() {
-        if (isCapsLock || isPasswordInput) return
-        val ic = currentInputConnection ?: return
-        val before = ic.getTextBeforeCursor(3, 0)?.toString() ?: ""
-        isShifted = before.isEmpty() || before.endsWith(". ") || before.endsWith("! ") || before.endsWith("? ") || before.endsWith("\n")
-    }
-
-    private fun vibrateKey(light: Boolean = false) {
-        val enabled = prefs.getBoolean(KbConfig.KEY_VIBRATE_ENABLED, true)
-        if (!enabled) return
-        val baseDuration = prefs.getInt(KbConfig.KEY_VIBRATE_STRENGTH, 18).toLong().coerceIn(5L, 60L)
-        val dur = if (light) (baseDuration / 2).coerceAtLeast(5L) else baseDuration
-        try {
-            val vib = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vib.vibrate(VibrationEffect.createOneShot(dur, VibrationEffect.DEFAULT_AMPLITUDE))
-            } else {
-                @Suppress("DEPRECATION")
-                vib.vibrate(dur)
-            }
-        } catch (_: Exception) {}
-    }
-
-    private fun roundedBg(hex: String, radiusDp: Float): GradientDrawable {
-        return GradientDrawable().apply {
-            setColor(KbConfig.safeColor(hex))
-            cornerRadius = dp(radiusDp.toInt()).toFloat()
-        }
-    }
-
-    private fun dp(value: Int): Int {
-        return TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            value.toFloat(),
-            resources.displayMetrics
-        ).toInt()
-    }
-}
-EOF
-
-          # 9. SetupActivity.kt
-          cat << 'EOF' > app/src/main/java/com/alharitm/uzbekfkeyboard/SetupActivity.kt
-package com.alharitm.uzbekfkeyboard
-
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
-import android.graphics.Color
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
-import android.os.Bundle
-import android.provider.Settings
-import android.text.InputType
-import android.util.TypedValue
-import android.view.Gravity
-import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.SeekBar
-import android.widget.Switch
-import android.widget.TextView
-
-class SetupActivity : Activity() {
-    private lateinit var prefs: SharedPreferences
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        prefs = getSharedPreferences(KbConfig.PREFS_NAME, Context.MODE_PRIVATE)
-        renderSettingsScreen()
-    }
-
-    private fun renderSettingsScreen() {
-        val scroll = ScrollView(this).apply {
-            setBackgroundColor(Color.parseColor("#F4F6FA"))
-        }
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(22), dp(18), dp(40))
-        }
-
-        val headerCard = cardContainer("#0F172A")
-        val badgeRow = TextView(this).apply {
-            text = "🇺🇿  Ö • Ğ • Ş • Ç • Ў • Қ   |   ARAGON v4.4"
-            setTextColor(Color.parseColor("#38BDF8"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            typeface = Typeface.DEFAULT_BOLD
-        }
-        val title = TextView(this).apply {
-            text = "Oʻzbek F-Klaviatura Pro"
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.WHITE)
-            setPadding(0, dp(4), 0, dp(4))
-        }
-        val sub = TextView(this).apply {
-            text = "Yangi Lotin, Oʻzbek F, QWERTY va Kirill • Popup harf • Parol himoyasi • Katta harflar (130%–200%)"
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-            setTextColor(Color.parseColor("#94A3B8"))
-        }
-        headerCard.addView(badgeRow)
-        headerCard.addView(title)
-        headerCard.addView(sub)
-        root.addView(headerCard)
-
-        val stepCard = cardContainer("#FFFFFF")
-        stepCard.addView(sectionLabel("1. Klaviaturani faollashtirish va sinash"))
-        val rowBtns = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-
-        val btnEnable = Button(this).apply {
-            text = "1. Yoqish"
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            background = pillDrawable("#2563EB")
-            layoutParams = LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(0, 0, dp(6), 0) }
-            setOnClickListener { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
-        }
-        val btnSelect = Button(this).apply {
-            text = "2. Tanlash"
-            isAllCaps = false
-            setTextColor(Color.WHITE)
-            background = pillDrawable("#059669")
-            layoutParams = LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(dp(6), 0, 0, 0) }
-            setOnClickListener {
-                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.showInputMethodPicker()
-            }
-        }
-        rowBtns.addView(btnEnable)
-        rowBtns.addView(btnSelect)
-        stepCard.addView(rowBtns)
-
-        val testInput = EditText(this).apply {
-            hint = "✍️ Oddiy matn yozib sinab koʻring (masalom: assalomu)..."
-            setTextColor(Color.parseColor("#0F172A"))
-            setHintTextColor(Color.parseColor("#64748B"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            setPadding(dp(14), dp(12), dp(14), dp(12))
-            background = pillDrawable("#F1F5F9")
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                setMargins(0, dp(12), 0, dp(6))
-            }
-        }
-        val passInput = EditText(this).apply {
-            hint = "🔒 Parol himoyasini sinab koʻring (yulduzcha rejimi)..."
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            setTextColor(Color.parseColor("#0F172A"))
-            setHintTextColor(Color.parseColor("#64748B"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            setPadding(dp(14), dp(12), dp(14), dp(12))
-            background = pillDrawable("#FEF2F2")
-        }
-        stepCard.addView(testInput)
-        stepCard.addView(passInput)
-        root.addView(stepCard)
-
-        val fontCard = cardContainer("#FFFFFF")
-        fontCard.addView(sectionLabel("2. Harf Kattaligi (Standart: 130%, Maksimal: 200%)"))
-        val curFontScale = prefs.getInt(KbConfig.KEY_FONT_SCALE, 130)
-        val fontTitle = TextView(this).apply {
-            text = "Harflar oʻlchami: $curFontScale% (Birlamchi standart: 130%)"
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#0F172A"))
-            setPadding(0, dp(4), 0, dp(6))
-        }
-        fontCard.addView(fontTitle)
-
-        val seek = SeekBar(this).apply {
-            max = 100
-            progress = (curFontScale - 100).coerceIn(0, 100)
-            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
-                    val scale = 100 + p
-                    fontTitle.text = "Harflar oʻlchami: $scale% (Birlamchi standart: 130%)"
-                    prefs.edit().putInt(KbConfig.KEY_FONT_SCALE, scale).apply()
-                }
-                override fun onStartTrackingTouch(s: SeekBar?) {}
-                override fun onStopTrackingTouch(s: SeekBar?) {}
-            })
-        }
-        fontCard.addView(seek)
-
-        val presetRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(0, dp(8), 0, 0)
-        }
-        listOf("Standart (130%)" to 130, "Katta (155%)" to 155, "👁️ Juda Katta (185%)" to 185).forEach { (lbl, sc) ->
-            val b = Button(this).apply {
-                text = lbl
-                isAllCaps = false
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-                setTextColor(Color.parseColor("#1E293B"))
-                background = pillDrawable("#E2E8F0")
-                layoutParams = LinearLayout.LayoutParams(0, dp(38), 1f).apply { setMargins(dp(3), 0, dp(3), 0) }
-                setOnClickListener {
-                    prefs.edit().putInt(KbConfig.KEY_FONT_SCALE, sc).apply()
-                    renderSettingsScreen()
-                }
-            }
-            presetRow.addView(b)
-        }
-        fontCard.addView(presetRow)
-        root.addView(fontCard)
-
-        val layoutCard = cardContainer("#FFFFFF")
-        layoutCard.addView(sectionLabel("3. Klaviatura Joylashuvi (Lotin F, QWERTY va Kirill)"))
-        val activeLayoutId = prefs.getString(KbConfig.KEY_LAYOUT, "uz_f_v10")
-
-        KbConfig.LAYOUTS.forEach { l ->
-            val isSelected = l.id == activeLayoutId
-            val btn = Button(this).apply {
-                text = if (isSelected) "✅  ${l.title}" else "⚪  ${l.title}"
-                isAllCaps = false
-                gravity = Gravity.START or Gravity.CENTER_VERTICAL
-                setPadding(dp(14), dp(10), dp(14), dp(10))
-                setTextColor(if (isSelected) Color.WHITE else Color.parseColor("#1E293B"))
-                background = pillDrawable(if (isSelected) "#2563EB" else "#F1F5F9")
-                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                    setMargins(0, dp(4), 0, dp(4))
-                }
-                setOnClickListener {
-                    prefs.edit().putString(KbConfig.KEY_LAYOUT, l.id).apply()
-                    renderSettingsScreen()
-                }
-            }
-            layoutCard.addView(btn)
-        }
-        root.addView(layoutCard)
-
-        val prefCard = cardContainer("#FFFFFF")
-        prefCard.addView(sectionLabel("4. Tugma Harakati, Haptik va Imlo"))
-        prefCard.addView(switchRow("Bosilganda harfni tepada chiqarish (Popup)", "Videodagi kabi bosilgan harf kattalashib koʻrinadi", KbConfig.KEY_POPUP_PREVIEW, true))
-        prefCard.addView(switchRow("Oʻzbek imlo tekshiruvi va 'Geri al'", "Xato soʻzlarni toʻgʻrilaydi va qaytarish tugmasini chiqaradi", KbConfig.KEY_AUTO_CORRECT, true))
-        prefCard.addView(switchRow("Haptik aloqa (Vibratsiya)", "Tugma bosilganda yengil tebranish", KbConfig.KEY_VIBRATE_ENABLED, true))
-        prefCard.addView(switchRow("Raqamlar qatori (1–0)", "Yuqorida raqamlarni doimiy koʻrsatish", KbConfig.KEY_NUM_ROW, true))
-        prefCard.addView(switchRow("Til almashtirish tugmasi (🌐)", "Lotin va Kirill orasida tezkor oʻtish", KbConfig.KEY_LANG_KEY, true))
-        root.addView(prefCard)
-
-        val themeCard = cardContainer("#FFFFFF")
-        themeCard.addView(sectionLabel("5. Mavzular va Ranglar (Theme)"))
-        val activeThemeId = prefs.getString(KbConfig.KEY_THEME, "default_dark")
-
-        KbConfig.THEMES.chunked(2).forEach { pair ->
-            val r = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-            pair.forEach { t ->
-                val selected = t.id == activeThemeId
-                val b = Button(this).apply {
-                    text = if (selected) "✓ ${t.name}" else t.name
-                    isAllCaps = false
-                    setTextColor(KbConfig.safeColor(t.keyText))
-                    background = GradientDrawable().apply {
-                        setColor(KbConfig.safeColor(t.boardBg))
-                        cornerRadius = dp(12).toFloat()
-                        setStroke(dp(if (selected) 3 else 1), if (selected) Color.parseColor("#2563EB") else Color.parseColor("#CBD5E1"))
-                    }
-                    layoutParams = LinearLayout.LayoutParams(0, dp(52), 1f).apply {
-                        setMargins(dp(4), dp(4), dp(4), dp(4))
-                    }
-                    setOnClickListener {
-                        prefs.edit().putString(KbConfig.KEY_THEME, t.id).apply()
-                        renderSettingsScreen()
-                    }
-                }
-                r.addView(b)
-            }
-            themeCard.addView(r)
-        }
-        root.addView(themeCard)
-
-        scroll.addView(root)
-        setContentView(scroll)
-    }
-
-    private fun switchRow(titleText: String, subText: String, prefKey: String, defaultVal: Boolean): View {
-        val row = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, dp(8), 0, dp(8))
-        }
-        val textCol = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-        }
-        val t = TextView(this).apply {
-            text = titleText
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#0F172A"))
-        }
-        val s = TextView(this).apply {
-            text = subText
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            setTextColor(Color.parseColor("#64748B"))
-        }
-        textCol.addView(t)
-        textCol.addView(s)
-
-        val sw = Switch(this).apply {
-            isChecked = prefs.getBoolean(prefKey, defaultVal)
-            setOnCheckedChangeListener { _, isChecked ->
-                prefs.edit().putBoolean(prefKey, isChecked).apply()
-            }
-        }
-        row.addView(textCol)
-        row.addView(sw)
-        return row
-    }
-
-    private fun cardContainer(bgHex: String): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(16), dp(16), dp(16))
-            background = pillDrawable(bgHex, 16f)
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { setMargins(0, 0, 0, dp(14)) }
-        }
-    }
-
-    private fun sectionLabel(txt: String): TextView {
-        return TextView(this).apply {
-            text = txt
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#2563EB"))
-            setPadding(0, 0, 0, dp(8))
-        }
-    }
-
-    private fun pillDrawable(hex: String, radiusDp: Float = 12f): GradientDrawable {
-        return GradientDrawable().apply {
-            setColor(KbConfig.safeColor(hex))
-            cornerRadius = dp(radiusDp.toInt()).toFloat()
-        }
-    }
-
-    private fun dp(v: Int): Int {
-        return TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            v.toFloat(),
-            resources.displayMetrics
-        ).toInt()
-    }
-}
-EOF
-
-          # 10. Release APK va Play Store AAB paketlarini derlash
-          gradle assembleRelease bundleRelease --no-daemon
-
-      - name: 6. Release APK paketini yukle
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > release-key.jks
+            echo "Doimiy keystore secrets'dan yuklandi."
+          else
+            echo "::warning::KEYSTORE_BASE64 secret topilmadi. Vaqtinchalik kalit yaratildi!"
+            export KEYSTORE_PASSWORD="TempKey2026x"
+            export KEY_ALIAS="alharitm_key"
+            export KEY_PASSWORD="TempKey2026x"
+            keytool -genkeypair \
+              -keystore release-key.jks \
+              -alias "$KEY_ALIAS" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" \
+              -dname "CN=Sarvarbek Nazarov, OU=Alharitm, O=Alharitm, L=Tashkent, ST=Tashkent, C=UZ"
+          fi
+
+          # 2. gradle.properties
+          write_file gradle.properties << 'EOF'
+          org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          kotlin.code.style=official
+          android.nonTransitiveRClass=true
+          EOF
+
+          # 3. settings.gradle
+          write_file settings.gradle << 'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "UzbekFKeyboardAragon"
+          include(":app")
+          EOF
+
+          # 4. Root build.gradle
+          write_file build.gradle << 'EOF'
+          plugins {
+              id 'com.android.application' version '8.5.2' apply false
+              id 'org.jetbrains.kotlin.android' version '1.9.24' apply false
+          }
+          EOF
+
+          # 5. app/proguard-rules.pro
+          write_file app/proguard-rules.pro << 'EOF'
+          -keep class com.alharitm.uzbekfkeyboard.** { *; }
+          -dontwarn android.**
+          EOF
+
+          # 6. app/build.gradle
+          write_file app/build.gradle << 'EOF'
+          plugins {
+              id 'com.android.application'
+              id 'org.jetbrains.kotlin.android'
+          }
+
+          android {
+              namespace 'com.alharitm.uzbekfkeyboard'
+              compileSdk 35
+
+              defaultConfig {
+                  applicationId "com.alharitm.uzbekfkeyboard"
+                  minSdk 23
+                  targetSdk 35
+                  versionCode (System.getenv("GITHUB_RUN_NUMBER") ?: "10").toInteger()
+                  versionName "4.5.0"
+              }
+
+              signingConfigs {
+                  release {
+                      storeFile file("../release-key.jks")
+                      storePassword System.getenv("KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("KEY_ALIAS")
+                      keyPassword System.getenv("KEY_PASSWORD")
+                  }
+              }
+
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                      minifyEnabled true
+                      shrinkResources true
+                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                  }
+                  debug {
+                      signingConfig signingConfigs.release
+                  }
+              }
+
+              lint {
+                  checkReleaseBuilds false
+                  abortOnError false
+              }
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+          }
+          EOF
+
+          # 7. Ilova Ikonkasi (O'zbekiston Bayrog'i + Ö Ğ Ş Ç)
+          write_file app/src/main/res/drawable/ic_launcher_background.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path android:fillColor="#0099B5" android:pathData="M0,0h108v35h-108z"/>
+              <path android:fillColor="#CE1126" android:pathData="M0,35h108v2.5h-108z"/>
+              <path android:fillColor="#FFFFFF" android:pathData="M0,37.5h108v33h-108z"/>
+              <path android:fillColor="#CE1126" android:pathData="M0,70.5h108v2.5h-108z"/>
+              <path android:fillColor="#1EB53A" android:pathData="M0,73h108v35h-108z"/>
+          </vector>
+          EOF
+
+          write_file app/src/main/res/drawable/ic_launcher_foreground.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path
+                  android:fillColor="#E6141824"
+                  android:strokeColor="#FFFFFF"
+                  android:strokeWidth="1.5"
+                  android:pathData="M24,24 L84,24 A10,10 0 0,1 94,34 L94,74 A10,10 0 0,1 84,84 L24,84 A10,10 0 0,1 14,74 L14,34 A10,10 0 0,1 24,24 Z"/>
+              <path android:fillColor="#0099B5" android:pathData="M23,29 L50,29 A4,4 0 0,1 54,33 L54,51 A4,4 0 0,1 50,55 L23,55 A4,4 0 0,1 19,51 L19,33 A4,4 0 0,1 23,29 Z"/>
+              <path android:fillColor="#2563EB" android:pathData="M58,29 L85,29 A4,4 0 0,1 89,33 L89,51 A4,4 0 0,1 85,55 L58,55 A4,4 0 0,1 54.5,51 L54.5,33 A4,4 0 0,1 58,29 Z"/>
+              <path android:fillColor="#1EB53A" android:pathData="M23,57 L50,57 A4,4 0 0,1 54,61 L54,77 A4,4 0 0,1 50,81 L23,81 A4,4 0 0,1 19,77 L19,61 A4,4 0 0,1 23,57 Z"/>
+              <path android:fillColor="#CE1126" android:pathData="M58,57 L85,57 A4,4 0 0,1 89,61 L89,77 A4,4 0 0,1 85,81 L58,81 A4,4 0 0,1 54.5,77 L54.5,61 A4,4 0 0,1 58,57 Z"/>
+              <path android:strokeColor="#FFFFFF" android:strokeWidth="2.6" android:fillColor="#00000000"
+                  android:pathData="M36.5,37 A6.5,6.5 0 1,1 36.4,37 Z"/>
+              <path android:fillColor="#FFFFFF" android:pathData="M33.5,33.5 m-1.4,0 a1.4,1.4 0 1,0 2.8,0 a1.4,1.4 0 1,0 -2.8,0"/>
+              <path android:fillColor="#FFFFFF" android:pathData="M39.5,33.5 m-1.4,0 a1.4,1.4 0 1,0 2.8,0 a1.4,1.4 0 1,0 -2.8,0"/>
+              <path android:strokeColor="#FFFFFF" android:strokeWidth="2.6" android:fillColor="#00000000"
+                  android:pathData="M76,39.5 A6.5,6.5 0 1,0 76,47.5 L76,43.5 L71.5,43.5"/>
+              <path android:strokeColor="#FFFFFF" android:strokeWidth="2.2" android:fillColor="#00000000"
+                  android:pathData="M68.5,33 Q72,36 75.5,33"/>
+              <path android:strokeColor="#FFFFFF" android:strokeWidth="2.6" android:fillColor="#00000000"
+                  android:pathData="M41,63 C38,60.5 32,61 32,64.5 C32,68.5 41,67.5 41,72 C41,75.5 35,76 32,73.5"/>
+              <path android:strokeColor="#FFFFFF" android:strokeWidth="2.2" android:fillColor="#00000000"
+                  android:pathData="M36.5,75.5 L35.5,79"/>
+              <path android:strokeColor="#FFFFFF" android:strokeWidth="2.6" android:fillColor="#00000000"
+                  android:pathData="M76.5,63.5 A6,6 0 1,0 76.5,73.5"/>
+              <path android:strokeColor="#FFFFFF" android:strokeWidth="2.2" android:fillColor="#00000000"
+                  android:pathData="M71.5,75.5 L70.5,79"/>
+          </vector>
+          EOF
+
+          write_file app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@drawable/ic_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+
+          # 8. Strings & XML method
+          write_file app/src/main/res/values/strings.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Oʻzbek F-Klaviatura Pro</string>
+          </resources>
+          EOF
+
+          write_file app/src/main/res/xml/method.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <input-method xmlns:android="http://schemas.android.com/apk/res/android"
+              android:settingsActivity="com.alharitm.uzbekfkeyboard.SetupActivity"
+              android:supportsSwitchingToNextInputMethod="true">
+              <subtype
+                  android:label="Oʻzbek F / Lotin (Ö, Ğ, Ş, Ç)"
+                  android:imeSubtypeLocale="uz_UZ"
+                  android:imeSubtypeMode="keyboard" />
+              <subtype
+                  android:label="Ўзбек Кирилл (ЙЦУКЕН)"
+                  android:imeSubtypeLocale="uz_CYRL_UZ"
+                  android:imeSubtypeMode="keyboard" />
+          </input-method>
+          EOF
+
+          # 9. AndroidManifest.xml
+          write_file app/src/main/AndroidManifest.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.VIBRATE" />
+              <application
+                  android:label="@string/app_name"
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher"
+                  android:allowBackup="false"
+                  android:supportsRtl="true"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+                  <activity
+                      android:name=".SetupActivity"
+                      android:exported="true"
+                      android:windowSoftInputMode="stateHidden|adjustResize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+                  <service
+                      android:name=".UzbekFKeyboardService"
+                      android:label="@string/app_name"
+                      android:permission="android.permission.BIND_INPUT_METHOD"
+                      android:exported="true"
+                      android:directBootAware="true">
+                      <intent-filter>
+                          <action android:name="android.view.InputMethod" />
+                      </intent-filter>
+                      <meta-data
+                          android:name="android.view.im"
+                          android:resource="@xml/method" />
+                  </service>
+              </application>
+          </manifest>
+          EOF
+
+          # 10. UzbekFKeyboardService.kt
+          write_file app/src/main/java/com/alharitm/uzbekfkeyboard/UzbekFKeyboardService.kt << 'EOF'
+          package com.alharitm.uzbekfkeyboard
+
+          import android.content.ClipboardManager
+          import android.content.Context
+          import android.content.Intent
+          import android.content.SharedPreferences
+          import android.graphics.Canvas
+          import android.graphics.Color
+          import android.graphics.Paint
+          import android.graphics.RectF
+          import android.graphics.Typeface
+          import android.graphics.drawable.GradientDrawable
+          import android.inputmethodservice.InputMethodService
+          import android.net.Uri
+          import android.os.Build
+          import android.os.Handler
+          import android.os.Looper
+          import android.os.VibrationEffect
+          import android.os.Vibrator
+          import android.text.InputType
+          import android.util.TypedValue
+          import android.view.Gravity
+          import android.view.KeyEvent
+          import android.view.MotionEvent
+          import android.view.View
+          import android.view.ViewGroup
+          import android.view.inputmethod.EditorInfo
+          import android.widget.Button
+          import android.widget.FrameLayout
+          import android.widget.LinearLayout
+          import android.widget.PopupWindow
+          import android.widget.TextView
+          import android.widget.Toast
+
+          data class KbTheme(
+              val id: String,
+              val name: String,
+              val boardBg: String,
+              val keyBg: String,
+              val specKeyBg: String,
+              val keyText: String,
+              val accentBg: String,
+              val accentText: String,
+              val isLight: Boolean = false
+          )
+
+          data class KbLayoutDef(
+              val id: String,
+              val title: String,
+              val badge: String,
+              val rows: List<List<String>>,
+              val isCyrillic: Boolean = false
+          )
+
+          object KbConfig {
+              const val PREFS_NAME = "alharitm_uzbek_f_aragon_v45"
+              const val KEY_THEME = "theme_id"
+              const val KEY_LAYOUT = "layout_id"
+              const val KEY_NUM_ROW = "show_num_row"
+              const val KEY_EMOJI_KEY = "show_emoji_key"
+              const val KEY_LANG_KEY = "show_lang_key"
+              const val KEY_COMMA_KEY = "show_comma_key"
+              const val KEY_PERIOD_KEY = "show_period_key"
+              const val KEY_FONT_SCALE = "font_scale_v45"
+              const val KEY_KEY_HEIGHT = "key_height_scale_v45"
+              const val KEY_ONE_HANDED = "one_handed_mode"
+              const val KEY_VIBRATE_ENABLED = "vibrate_enabled"
+              const val KEY_VIBRATE_STRENGTH = "vibrate_strength_ms"
+              const val KEY_AUTO_CORRECT = "auto_correct_enabled"
+              const val KEY_POPUP_PREVIEW = "popup_preview_enabled"
+
+              fun safeColor(hex: String, fallback: Int = Color.DKGRAY): Int {
+                  return try {
+                      val clean = if (hex.startsWith("#")) hex else "#$hex"
+                      Color.parseColor(clean)
+                  } catch (e: Exception) {
+                      fallback
+                  }
+              }
+
+              val THEMES = listOf(
+                  KbTheme("default_dark", "Default Dark", "#1B1B1F", "#2F3036", "#232429", "#F1F5F9", "#A8C7FA", "#062E6F", false),
+                  KbTheme("default_light", "Default Light", "#EAEEF4", "#FFFFFF", "#D7DFEC", "#1E293B", "#1A73E8", "#FFFFFF", true),
+                  KbTheme("uzbek_flag", "Oʻzbekiston Bayrogʻi", "#0B2239", "#007791", "#14532D", "#FFFFFF", "#1EB53A", "#FFFFFF", false),
+                  KbTheme("oled_black", "Obsidian OLED", "#000000", "#16161A", "#0D0D10", "#F8FAFC", "#6366F1", "#FFFFFF", false),
+                  KbTheme("high_contrast", "Koʻzga Qulay (Sariq/Qora)", "#000000", "#1C1C1C", "#2E2E2E", "#FFEB3B", "#FFD600", "#000000", false),
+                  KbTheme("slate_blue", "Slate Blue", "#202A34", "#32404E", "#26323E", "#F1F5F9", "#7DD3FC", "#082F49", false),
+                  KbTheme("crimson_red", "Crimson Red", "#B91C1C", "#DC2626", "#991B1B", "#FFFFFF", "#FCA5A5", "#450A0A", false),
+                  KbTheme("forest_green", "Forest Green", "#15803D", "#22C55E", "#166534", "#FFFFFF", "#BBF7D0", "#052E16", false),
+                  KbTheme("royal_blue", "Royal Blue", "#1D4ED8", "#2563EB", "#1E40AF", "#FFFFFF", "#93C5FD", "#172554", false)
+              )
+
+              val LAYOUTS = listOf(
+                  KbLayoutDef(
+                      "uz_f_v10",
+                      "Oʻzbek F v1.0 (Standart 10×3)",
+                      "Oʻzbek F",
+                      listOf(
+                          listOf("f", "g", "ğ", "o", "q", "d", "r", "n", "h", "p"),
+                          listOf("u", "i", "e", "a", "ö", "t", "k", "l", "m", "s"),
+                          listOf("j", "x", "v", "ç", "z", "ş", "b", "y", "ʼ")
+                      ),
+                      false
+                  ),
+                  KbLayoutDef(
+                      "uz_f_v11",
+                      "Oʻzbek F v1.1 (Y oʻrtada, Ö tepada)",
+                      "Oʻzbek F 1.1",
+                      listOf(
+                          listOf("f", "g", "ğ", "ö", "q", "d", "r", "n", "h", "p"),
+                          listOf("u", "i", "e", "a", "o", "t", "k", "l", "m", "y"),
+                          listOf("j", "x", "v", "ç", "z", "s", "b", "ş", "ʼ")
+                      ),
+                      false
+                  ),
+                  KbLayoutDef(
+                      "uz_qwerty_new",
+                      "Yangi Oʻzbek QWERTY (Ö, Ğ, Ş, Ç, ʼ)",
+                      "Oʻzbek QWERTY",
+                      listOf(
+                          listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "ö", "ğ"),
+                          listOf("a", "s", "d", "f", "g", "h", "j", "k", "l", "ş", "ç"),
+                          listOf("z", "x", "c", "v", "b", "n", "m", "ʼ")
+                      ),
+                      false
+                  ),
+                  KbLayoutDef(
+                      "uz_cyrl",
+                      "Ўзбек Кирилл (ЙЦУКЕН + Ў, Қ, Ғ, Ҳ)",
+                      "Ўзбек Кирилл",
+                      listOf(
+                          listOf("й", "ц", "у", "к", "е", "н", "г", "ш", "ў", "з", "х", "ъ"),
+                          listOf("ф", "қ", "в", "а", "п", "р", "о", "л", "д", "ж", "э"),
+                          listOf("я", "ч", "с", "м", "и", "т", "ь", "б", "ю", "ғ", "ҳ")
+                      ),
+                      true
+                  ),
+                  KbLayoutDef(
+                      "tr_f_classic",
+                      "Türkçe F (12×3 Klassik)",
+                      "Türkçe F",
+                      listOf(
+                          listOf("f", "g", "ğ", "ı", "o", "d", "r", "n", "h", "p", "q", "w"),
+                          listOf("u", "i", "e", "a", "ü", "t", "k", "m", "l", "y", "ş"),
+                          listOf("j", "ö", "v", "c", "ç", "z", "s", "b", "x")
+                      ),
+                      false
+                  )
+              )
+
+              val POPUP_ALTS = mapOf(
+                  "o" to listOf("ö", "oʻ", "0"),
+                  "ö" to listOf("o", "oʻ", "ü"),
+                  "g" to listOf("ğ", "gʻ"),
+                  "ğ" to listOf("g", "gʻ"),
+                  "s" to listOf("ş", "sh", "$"),
+                  "ş" to listOf("s", "sh"),
+                  "c" to listOf("ç", "ch"),
+                  "ç" to listOf("c", "ch"),
+                  "v" to listOf("w", "v"),
+                  "u" to listOf("ü", "ú"),
+                  "i" to listOf("ı", "í"),
+                  "a" to listOf("ä", "@"),
+                  "e" to listOf("é", "€"),
+                  "ʼ" to listOf("'", "’", "\""),
+                  "." to listOf(",", "?", "!", ":", ";", "@"),
+                  "у" to listOf("ў", "у"),
+                  "к" to listOf("қ", "к"),
+                  "г" to listOf("ғ", "г"),
+                  "х" to listOf("ҳ", "х"),
+                  "е" to listOf("ё", "э"),
+                  "ъ" to listOf("ь", "ъ")
+              )
+
+              val EMOJIS = listOf(
+                  "🔥", "❤️", "✨", "🇺🇿", "👍", "🙏", "😊", "😂", "🤣", "😍",
+                  "🥰", "😎", "🤩", "🥳", "😭", "😅", "🙌", "👏", "💪", "🤝",
+                  "🎉", "🌹", "☀️", "🌙", "⭐", "⚡", "✅", "❌", "💯", "🚀",
+                  "📚", "💻", "📱", "☕", "🍵", "🍉", "🍇", "🕌", "🏛️", "🎯"
+              )
+
+              val AUTO_FIX_MAP = mapOf(
+                  "ozbek" to "özbek", "ozbekiston" to "özbekiston", "ogil" to "öğil",
+                  "oqish" to "öqiş", "oqituvchi" to "öqituvçi", "organish" to "örganiş",
+                  "ozgarish" to "özgariş", "orta" to "örta", "ortoq" to "örtoq",
+                  "otish" to "ötiş", "oyin" to "öyin", "oyla" to "öyla",
+                  "korsatish" to "körsatiş", "korish" to "köriş", "kop" to "köp",
+                  "kongil" to "köngil", "kocha" to "köça", "koz" to "köz",
+                  "boladi" to "böladi", "bolib" to "bölib", "bolish" to "böliş",
+                  "bolim" to "bölim", "togri" to "töğri", "toliq" to "töliq",
+                  "tolov" to "tölov", "tort" to "tört", "toxta" to "töxta",
+                  "qoshimcha" to "qöşimça", "qoshish" to "qöşiş", "qol" to "qöl",
+                  "soz" to "söz", "sozlash" to "sözlaş", "soroq" to "söroq",
+                  "yol" to "yöl", "yoq" to "yöq", "goya" to "ğoya", "golib" to "ğolib",
+                  "gurur" to "ğurur", "ish" to "iş", "ishlash" to "işlaş",
+                  "ishonch" to "işonç", "bosh" to "boş", "yaxshi" to "yaxşi",
+                  "yosh" to "yoş", "shahar" to "şahar", "shaxs" to "şaxs",
+                  "shart" to "şart", "shuningdek" to "şuningdek", "uchun" to "uçun",
+                  "uch" to "uç", "chiqish" to "çiqiş", "chiroyli" to "çiroyli",
+                  "kichik" to "kiçik", "kuchli" to "kuçli", "qachon" to "qaçon",
+                  "hech" to "heç", "ochiq" to "oçiq", "talim" to "taʼlim",
+                  "malumot" to "maʼlumot", "mano" to "maʼno", "manaviyat" to "maʼnaviyat",
+                  "etibor" to "eʼtibor", "anana" to "anʼana", "sanat" to "sanʼat"
+              )
+
+              val DICTIONARY_WORDS = listOf(
+                  "assalomu", "alaykum", "özbekiston", "özbek", "töşkent", "yangi", "alifbo",
+                  "klaviatura", "dastur", "taʼlim", "maʼlumot", "maʼnaviyat", "eʼtibor",
+                  "yaxşi", "töğri", "böladi", "bölib", "uçun", "bilan", "hamda", "lekin",
+                  "şuningdek", "qöşimça", "işlaş", "işonç", "öqiş", "örganiş", "sozlamalar",
+                  "harflar", "tugmalar", "tezlik", "aniqlik", "akademiya", "darslar",
+                  "muvaffaqiyat", "tabriklaymiz", "rahmat", "marhamat", "doʻstlar"
+              )
+
+              val CYRILLIC_AUTO_FIX = mapOf(
+                  "узбек" to "ўзбек", "узбекистон" to "ўзбекистон", "укиш" to "ўқиш",
+                  "урганиш" to "ўрганиш", "тугри" to "тўғри", "булади" to "бўлади",
+                  "кушимча" to "қўшимча", "суз" to "сўз", "йул" to "йўл",
+                  "йук" to "йўқ", "голиб" to "ғолиб", "хаёт" to "ҳаёт",
+                  "хамма" to "ҳамма", "рахмат" to "раҳмат", "шахар" to "шаҳар"
+              )
+
+              val CYRILLIC_DICTIONARY = listOf(
+                  "ассалому", "алайкум", "ўзбекистон", "ўзбек", "тошкент", "янги",
+                  "клавиатура", "дастур", "таълим", "маълумот", "яхши", "тўғри",
+                  "бўлади", "учун", "билан", "ҳамда", "лекин", "шунингдек", "қўшимча",
+                  "ишлаш", "ишонч", "ўқиш", "ўрганиш", "раҳмат", "марҳамат"
+              )
+
+              val QUICK_TRANSLATE = mapOf(
+                  "assalomu alaykum" to Triple("Hello / Peace be upon you", "Selamün aleyküm / Merhaba", "Здравствуйте"),
+                  "rahmat" to Triple("Thank you", "Teşekkür ederim", "Спасибо"),
+                  "yaxşi" to Triple("Good / Well", "İyi / Güzel", "Хорошо"),
+                  "ha" to Triple("Yes", "Evet", "Да"),
+                  "yöq" to Triple("No", "Hayır / Yok", "Нет"),
+                  "özbekiston" to Triple("Uzbekistan", "Özbekistan", "Узбекистан"),
+                  "dastur" to Triple("Application", "Uygulama", "Программа"),
+                  "klaviatura" to Triple("Keyboard", "Klavye", "Клавиатура"),
+                  "taʼlim" to Triple("Education", "Eğitim", "Образование"),
+                  "maʼlumot" to Triple("Information", "Bilgi", "Информация"),
+                  "töğri" to Triple("Correct", "Doğru", "Правильно")
+              )
+
+              fun latinToCyrillic(text: String): String {
+                  var s = text
+                  val pairs = listOf(
+                      "Oʻ" to "Ў", "oʻ" to "ў", "O'" to "Ў", "o'" to "ў", "Ö" to "Ў", "ö" to "ў",
+                      "Gʻ" to "Ғ", "gʻ" to "ғ", "G'" to "Ғ", "g'" to "ғ", "Ğ" to "Ғ", "ğ" to "ғ",
+                      "Sh" to "Ш", "SH" to "Ш", "sh" to "ш", "Ş" to "Ш", "ş" to "ш",
+                      "Ch" to "Ч", "CH" to "Ч", "ch" to "ч", "Ç" to "Ч", "ç" to "ч",
+                      "Yo" to "Ё", "yo" to "ё", "Yu" to "Ю", "yu" to "ю",
+                      "Ya" to "Я", "ya" to "я", "Ye" to "Е", "ye" to "е",
+                      "ʼ" to "ъ", "'" to "ъ"
+                  )
+                  for ((lat, cyr) in pairs) s = s.replace(lat, cyr)
+                  val charMap = mapOf(
+                      'A' to 'А', 'a' to 'а', 'B' to 'Б', 'b' to 'б', 'D' to 'Д', 'd' to 'д',
+                      'E' to 'Э', 'e' to 'е', 'F' to 'Ф', 'f' to 'ф', 'G' to 'Г', 'g' to 'г',
+                      'H' to 'Ҳ', 'h' to 'ҳ', 'I' to 'И', 'i' to 'и', 'J' to 'Ж', 'j' to 'ж',
+                      'K' to 'К', 'k' to 'к', 'L' to 'Л', 'l' to 'л', 'M' to 'М', 'm' to 'м',
+                      'N' to 'Н', 'n' to 'н', 'O' to 'О', 'o' to 'о', 'P' to 'П', 'p' to 'п',
+                      'Q' to 'Қ', 'q' to 'қ', 'R' to 'Р', 'r' to 'р', 'S' to 'С', 's' to 'с',
+                      'T' to 'Т', 't' to 'т', 'U' to 'У', 'u' to 'у', 'V' to 'В', 'v' to 'в',
+                      'X' to 'Х', 'x' to 'х', 'Y' to 'Й', 'y' to 'й', 'Z' to 'З', 'z' to 'з'
+                  )
+                  val sb = StringBuilder()
+                  for (c in s) sb.append(charMap[c] ?: c)
+                  return sb.toString()
+              }
+
+              fun cyrillicToNewLatin(text: String): String {
+                  val map = mapOf(
+                      'А' to "A", 'а' to "a", 'Б' to "B", 'б' to "b", 'В' to "V", 'в' to "v",
+                      'Г' to "G", 'г' to "g", 'Д' to "D", 'д' to "d", 'Е' to "E", 'е' to "e",
+                      'Ё' to "Yo", 'ё' to "yo", 'Ж' to "J", 'ж' to "j", 'З' to "Z", 'з' to "z",
+                      'И' to "I", 'и' to "i", 'Й' to "Y", 'й' to "y", 'К' to "K", 'к' to "k",
+                      'Л' to "L", 'л' to "l", 'М' to "M", 'м' to "m", 'Н' to "N", 'н' to "n",
+                      'О' to "O", 'о' to "o", 'П' to "P", 'п' to "p", 'Р' to "R", 'р' to "r",
+                      'С' to "S", 'с' to "s", 'Т' to "T", 'т' to "t", 'У' to "U", 'у' to "u",
+                      'Ф' to "F", 'ф' to "f", 'Х' to "X", 'х' to "x", 'Ц' to "Ts", 'ц' to "ts",
+                      'Ч' to "Ç", 'ч' to "ç", 'Ш' to "Ş", 'ш' to "ş", 'Ъ' to "ʼ", 'ъ' to "ʼ",
+                      'Ь' to "", 'ь' to "", 'Э' to "E", 'э' to "e", 'Ю' to "Yu", 'ю' to "yu",
+                      'Я' to "Ya", 'я' to "ya", 'Ў' to "Ö", 'ў' to "ö", 'Қ' to "Q", 'қ' to "q",
+                      'Ғ' to "Ğ", 'ғ' to "ğ", 'Ҳ' to "H", 'ҳ' to "h"
+                  )
+                  val sb = StringBuilder()
+                  for (c in text) sb.append(map[c] ?: c.toString())
+                  return sb.toString()
+              }
+          }
+
+          class TouchDotKeyView(
+              context: Context,
+              val rawKey: String,
+              val displayChar: String,
+              val subHint: String?,
+              val theme: KbTheme,
+              val textSp: Float
+          ) : View(context) {
+
+              var isPressedDown = false
+                  set(value) {
+                      field = value
+                      invalidate()
+                  }
+
+              private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                  color = KbConfig.safeColor(theme.keyBg)
+              }
+              private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                  color = Color.argb(75, 0, 0, 0)
+              }
+              private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                  color = KbConfig.safeColor(theme.keyText)
+                  textAlign = Paint.Align.CENTER
+                  typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                  textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSp, resources.displayMetrics)
+              }
+              private val hintPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                  color = KbConfig.safeColor(theme.keyText)
+                  alpha = 135
+                  textAlign = Paint.Align.RIGHT
+                  typeface = Typeface.DEFAULT_BOLD
+                  textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 9.5f, resources.displayMetrics)
+              }
+              private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                  color = if (theme.isLight) Color.argb(110, 100, 116, 139) else Color.argb(145, 148, 163, 184)
+              }
+              private val rect = RectF()
+              private val shadowRect = RectF()
+
+              override fun onDraw(canvas: Canvas) {
+                  super.onDraw(canvas)
+                  val w = width.toFloat()
+                  val h = height.toFloat()
+                  val corner = dp(7f)
+
+                  shadowRect.set(0f, dp(1.5f), w, h)
+                  canvas.drawRoundRect(shadowRect, corner, corner, shadowPaint)
+
+                  rect.set(0f, 0f, w, h - dp(1.5f))
+                  canvas.drawRoundRect(rect, corner, corner, bgPaint)
+
+                  if (isPressedDown) {
+                      val radius = minOf(w, h) * 0.24f
+                      canvas.drawCircle(w / 2f, (h - dp(1.5f)) / 2f, radius, dotPaint)
+                  } else {
+                      if (!subHint.isNullOrEmpty()) {
+                          canvas.drawText(subHint, w - dp(4f), dp(11f), hintPaint)
+                      }
+                      val fm = textPaint.fontMetrics
+                      val textY = (h - dp(1.5f)) / 2f - (fm.ascent + fm.descent) / 2f
+                      canvas.drawText(displayChar, w / 2f, textY, textPaint)
+                  }
+              }
+
+              private fun dp(v: Float): Float =
+                  TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, resources.displayMetrics)
+          }
+
+          class UzbekFKeyboardService : InputMethodService() {
+
+              private lateinit var prefs: SharedPreferences
+              private var rootContainer: FrameLayout? = null
+              private var isShifted = false
+              private var isCapsLock = false
+              private var lastShiftClickTime = 0L
+              private var lastSpaceClickTime = 0L
+              private var isPasswordInput = false
+
+              private var lastAutoReplacedOriginal: String? = null
+              private var lastAutoReplacedTarget: String? = null
+
+              private var keyPreviewPopup: PopupWindow? = null
+              private var keyPreviewCharTv: TextView? = null
+              private var keyPreviewDotsTv: TextView? = null
+              private var keyPreviewCard: LinearLayout? = null
+
+              private val deleteHandler = Handler(Looper.getMainLooper())
+              private var isDeleting = false
+
+              private val deleteRunnable = object : Runnable {
+                  override fun run() {
+                      if (isDeleting) {
+                          handleBackspace()
+                          vibrateKey(true)
+                          deleteHandler.postDelayed(this, 55)
+                      }
+                  }
+              }
+
+              enum class ViewMode {
+                  LETTERS, SYMBOLS_1, SYMBOLS_2, NUMPAD, EMOJI, QUICK_MENU, THEME_PICKER, TRANSLATOR
+              }
+              private var currentMode = ViewMode.LETTERS
+
+              override fun onCreate() {
+                  super.onCreate()
+                  prefs = getSharedPreferences(KbConfig.PREFS_NAME, Context.MODE_PRIVATE)
+              }
+
+              override fun onCreateInputView(): View {
+                  val container = FrameLayout(this).apply {
+                      layoutParams = ViewGroup.LayoutParams(
+                          ViewGroup.LayoutParams.MATCH_PARENT,
+                          ViewGroup.LayoutParams.WRAP_CONTENT
+                      )
+                  }
+                  rootContainer = container
+                  renderKeyboardUI()
+                  return container
+              }
+
+              override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+                  super.onStartInputView(info, restarting)
+                  dismissKeyPreview()
+                  isPasswordInput = detectPasswordInput(info)
+                  lastAutoReplacedOriginal = null
+                  lastAutoReplacedTarget = null
+
+                  if (info != null) {
+                      val inputClass = info.inputType and InputType.TYPE_MASK_CLASS
+                      currentMode = if (inputClass == InputType.TYPE_CLASS_NUMBER || inputClass == InputType.TYPE_CLASS_PHONE) {
+                          ViewMode.NUMPAD
+                      } else {
+                          ViewMode.LETTERS
+                      }
+                  }
+                  if (!isPasswordInput) updateShiftStateFromEditor()
+                  if (rootContainer != null) renderKeyboardUI()
+              }
+
+              override fun onFinishInputView(finishingInput: Boolean) {
+                  super.onFinishInputView(finishingInput)
+                  dismissKeyPreview()
+              }
+
+              private fun detectPasswordInput(info: EditorInfo?): Boolean {
+                  if (info == null) return false
+                  val inputType = info.inputType
+                  val variation = inputType and InputType.TYPE_MASK_VARIATION
+                  val clazz = inputType and InputType.TYPE_MASK_CLASS
+
+                  if (clazz == InputType.TYPE_CLASS_TEXT) {
+                      if (variation == InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+                          variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
+                          variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
+                      ) return true
+                  }
+                  if (clazz == InputType.TYPE_CLASS_NUMBER && variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD) {
+                      return true
+                  }
+                  return false
+              }
+
+              private fun getActiveTheme(): KbTheme {
+                  val id = prefs.getString(KbConfig.KEY_THEME, "default_dark") ?: "default_dark"
+                  return KbConfig.THEMES.find { it.id == id } ?: KbConfig.THEMES.first()
+              }
+
+              private fun getActiveLayout(): KbLayoutDef {
+                  val id = prefs.getString(KbConfig.KEY_LAYOUT, "uz_f_v10") ?: "uz_f_v10"
+                  return KbConfig.LAYOUTS.find { it.id == id } ?: KbConfig.LAYOUTS.first()
+              }
+
+              private fun showKeyPreviewBubble(anchor: View, text: String, hasAlts: Boolean, theme: KbTheme) {
+                  if (!prefs.getBoolean(KbConfig.KEY_POPUP_PREVIEW, true) || isPasswordInput) return
+                  try {
+                      if (keyPreviewPopup == null) {
+                          val card = LinearLayout(this).apply {
+                              orientation = LinearLayout.VERTICAL
+                              gravity = Gravity.CENTER
+                              setPadding(dp(12), dp(6), dp(12), dp(6))
+                          }
+                          val charTv = TextView(this).apply {
+                              gravity = Gravity.CENTER
+                              typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                              setTextSize(TypedValue.COMPLEX_UNIT_SP, 27f)
+                          }
+                          val dotsTv = TextView(this).apply {
+                              this.text = "•••"
+                              gravity = Gravity.CENTER
+                              setTextSize(TypedValue.COMPLEX_UNIT_SP, 9f)
+                          }
+                          card.addView(charTv)
+                          card.addView(dotsTv)
+
+                          keyPreviewCard = card
+                          keyPreviewCharTv = charTv
+                          keyPreviewDotsTv = dotsTv
+
+                          keyPreviewPopup = PopupWindow(card, dp(56), dp(66), false).apply {
+                              isClippingEnabled = false
+                              isTouchable = false
+                          }
+                      }
+
+                      val popBgColor = if (theme.isLight) Color.WHITE else KbConfig.safeColor("#3C4043")
+                      keyPreviewCard?.background = GradientDrawable().apply {
+                          setColor(popBgColor)
+                          cornerRadius = dp(12).toFloat()
+                          setStroke(dp(1), KbConfig.safeColor(theme.accentBg))
+                      }
+                      keyPreviewCharTv?.setTextColor(KbConfig.safeColor(theme.keyText))
+                      keyPreviewCharTv?.text = text
+                      keyPreviewDotsTv?.setTextColor(KbConfig.safeColor(theme.accentBg))
+                      keyPreviewDotsTv?.visibility = if (hasAlts) View.VISIBLE else View.GONE
+
+                      val loc = IntArray(2)
+                      anchor.getLocationInWindow(loc)
+                      val popupW = dp(56)
+                      val popupH = dp(66)
+                      val x = loc[0] + (anchor.width - popupW) / 2
+                      val y = (loc[1] - popupH + dp(4)).coerceAtLeast(0)
+
+                      val popup = keyPreviewPopup!!
+                      if (popup.isShowing) {
+                          popup.update(x, y, popupW, popupH)
+                      } else {
+                          popup.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y)
+                      }
+                  } catch (_: Exception) {}
+              }
+
+              private fun dismissKeyPreview() {
+                  try {
+                      keyPreviewPopup?.dismiss()
+                  } catch (_: Exception) {}
+              }
+
+              fun renderKeyboardUI() {
+                  val container = rootContainer ?: return
+                  dismissKeyPreview()
+                  container.removeAllViews()
+                  val theme = getActiveTheme()
+                  val oneHanded = prefs.getBoolean(KbConfig.KEY_ONE_HANDED, false)
+
+                  val outerWrapper = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      setBackgroundColor(KbConfig.safeColor(theme.boardBg))
+                      layoutParams = FrameLayout.LayoutParams(
+                          ViewGroup.LayoutParams.MATCH_PARENT,
+                          ViewGroup.LayoutParams.WRAP_CONTENT
+                      )
+                  }
+
+                  val mainBoard = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setBackgroundColor(KbConfig.safeColor(theme.boardBg))
+                      setPadding(dp(3), dp(4), dp(3), dp(8))
+                      layoutParams = LinearLayout.LayoutParams(
+                          0,
+                          ViewGroup.LayoutParams.WRAP_CONTENT,
+                          if (oneHanded) 0.82f else 1.0f
+                      )
+                  }
+
+                  mainBoard.addView(buildTopToolbar(theme))
+                  mainBoard.addView(buildSuggestionsStrip(theme))
+
+                  when (currentMode) {
+                      ViewMode.LETTERS -> buildLettersView(mainBoard, theme)
+                      ViewMode.SYMBOLS_1 -> buildSymbolsView1(mainBoard, theme)
+                      ViewMode.SYMBOLS_2 -> buildSymbolsView2(mainBoard, theme)
+                      ViewMode.NUMPAD -> buildNumpadView(mainBoard, theme)
+                      ViewMode.EMOJI -> buildEmojiView(mainBoard, theme)
+                      ViewMode.QUICK_MENU -> buildQuickMenuView(mainBoard, theme)
+                      ViewMode.THEME_PICKER -> buildThemePickerView(mainBoard, theme)
+                      ViewMode.TRANSLATOR -> buildTranslatorView(mainBoard, theme)
+                  }
+
+                  outerWrapper.addView(mainBoard)
+
+                  if (oneHanded) {
+                      val sideBar = LinearLayout(this).apply {
+                          orientation = LinearLayout.VERTICAL
+                          gravity = Gravity.CENTER
+                          layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 0.18f)
+                      }
+                      val expandBtn = Button(this).apply {
+                          text = "⤢"
+                          setTextColor(KbConfig.safeColor(theme.keyText))
+                          background = roundedBg(theme.specKeyBg, 16f)
+                          setOnClickListener {
+                              vibrateKey()
+                              prefs.edit().putBoolean(KbConfig.KEY_ONE_HANDED, false).apply()
+                              renderKeyboardUI()
+                          }
+                      }
+                      sideBar.addView(expandBtn, LinearLayout.LayoutParams(dp(44), dp(44)))
+                      outerWrapper.addView(sideBar)
+                  }
+
+                  container.addView(outerWrapper)
+              }
+
+              private fun buildTopToolbar(theme: KbTheme): View {
+                  val bar = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      gravity = Gravity.CENTER_VERTICAL
+                      setPadding(dp(6), dp(2), dp(6), dp(3))
+                      layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(38))
+                  }
+
+                  fun toolBtn(icon: String, isActive: Boolean = false, onClick: () -> Unit): View {
+                      return Button(this).apply {
+                          text = icon
+                          isAllCaps = false
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                          setTextColor(if (isActive) KbConfig.safeColor(theme.accentText) else KbConfig.safeColor(theme.keyText))
+                          setPadding(0, 0, 0, 0)
+                          background = if (isActive) roundedBg(theme.accentBg, 18f) else GradientDrawable().apply { setColor(Color.TRANSPARENT) }
+                          layoutParams = LinearLayout.LayoutParams(0, dp(32), 1f).apply { setMargins(dp(2), 0, dp(2), 0) }
+                          setOnClickListener {
+                              vibrateKey()
+                              onClick()
+                          }
+                      }
+                  }
+
+                  bar.addView(toolBtn(if (currentMode == ViewMode.QUICK_MENU) "✕" else "⊞", currentMode == ViewMode.QUICK_MENU) {
+                      currentMode = if (currentMode == ViewMode.QUICK_MENU) ViewMode.LETTERS else ViewMode.QUICK_MENU
+                      renderKeyboardUI()
+                  })
+                  bar.addView(toolBtn("😊", currentMode == ViewMode.EMOJI) {
+                      currentMode = if (currentMode == ViewMode.EMOJI) ViewMode.LETTERS else ViewMode.EMOJI
+                      renderKeyboardUI()
+                  })
+                  bar.addView(toolBtn("🎨", currentMode == ViewMode.THEME_PICKER) {
+                      currentMode = if (currentMode == ViewMode.THEME_PICKER) ViewMode.LETTERS else ViewMode.THEME_PICKER
+                      renderKeyboardUI()
+                  })
+                  bar.addView(toolBtn("G文", currentMode == ViewMode.TRANSLATOR) {
+                      currentMode = if (currentMode == ViewMode.TRANSLATOR) ViewMode.LETTERS else ViewMode.TRANSLATOR
+                      renderKeyboardUI()
+                  })
+                  bar.addView(toolBtn("📋") { pasteFromClipboard() })
+                  bar.addView(toolBtn("⌨️") { cycleNextLayout() })
+                  bar.addView(toolBtn("⚙️") { openSettingsApp() })
+
+                  return bar
+              }
+
+              private fun buildSuggestionsStrip(theme: KbTheme): View {
+                  val strip = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      gravity = Gravity.CENTER_VERTICAL
+                      setPadding(dp(6), dp(2), dp(6), dp(4))
+                      layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(38))
+                  }
+
+                  if (isPasswordInput) {
+                      val shieldPill = TextView(this).apply {
+                          text = "🔒 Maxfiy parol rejimi  ••••••••"
+                          setTextColor(KbConfig.safeColor(theme.accentBg))
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
+                          typeface = Typeface.DEFAULT_BOLD
+                          gravity = Gravity.CENTER
+                          layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                      }
+                      strip.addView(shieldPill)
+                      return strip
+                  }
+
+                  val currentWord = getCurrentWordBeingTyped()
+
+                  if (currentWord.isEmpty() && lastAutoReplacedOriginal != null && lastAutoReplacedTarget != null) {
+                      val orig = lastAutoReplacedOriginal!!
+                      val targ = lastAutoReplacedTarget!!
+                      val undoBtn = Button(this).apply {
+                          text = "↶ Ortga qaytarish ($orig)"
+                          isAllCaps = false
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
+                          setTextColor(KbConfig.safeColor(theme.keyText))
+                          background = roundedBg(theme.keyBg, 16f)
+                          setPadding(dp(16), 0, dp(16), 0)
+                          layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(30)).apply {
+                              gravity = Gravity.CENTER
+                          }
+                          setOnClickListener {
+                              vibrateKey()
+                              undoLastAutoReplace(orig, targ)
+                          }
+                      }
+                      strip.gravity = Gravity.CENTER
+                      strip.addView(undoBtn)
+                      return strip
+                  }
+
+                  val suggestions = computeSuggestions(currentWord)
+                  suggestions.take(3).forEachIndexed { idx, word ->
+                      val isPrimary = idx == 0 && currentWord.isNotEmpty() && word.lowercase() != currentWord.lowercase()
+                      val chip = Button(this).apply {
+                          text = if (isPrimary) "✨ $word" else word
+                          isAllCaps = false
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                          typeface = if (idx == 0) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                          setTextColor(if (isPrimary) KbConfig.safeColor(theme.accentText) else KbConfig.safeColor(theme.keyText))
+                          background = if (isPrimary) roundedBg(theme.accentBg, 10f) else roundedBg(theme.specKeyBg, 8f)
+                          setPadding(dp(8), 0, dp(8), 0)
+                          layoutParams = LinearLayout.LayoutParams(0, dp(30), 1f).apply {
+                              setMargins(dp(3), 0, dp(3), 0)
+                          }
+                          setOnClickListener {
+                              vibrateKey()
+                              replaceCurrentWordWith(word, saveUndo = currentWord.isNotEmpty())
+                          }
+                      }
+                      strip.addView(chip)
+                  }
+                  return strip
+              }
+
+              private fun getCurrentWordBeingTyped(): String {
+                  if (isPasswordInput) return ""
+                  val ic = currentInputConnection ?: return ""
+                  val before = ic.getTextBeforeCursor(35, 0)?.toString() ?: return ""
+                  val lastSpace = before.indexOfLast { it.isWhitespace() || it in ".,!?;:()\"-" }
+                  return if (lastSpace == -1) before else before.substring(lastSpace + 1)
+              }
+
+              private fun computeSuggestions(word: String): List<String> {
+                  val layout = getActiveLayout()
+                  if (word.isBlank()) {
+                      return if (layout.isCyrillic) listOf("ассалому", "ўзбекистон", "яхши")
+                      else listOf("assalomu", "özbekiston", "yaxşi")
+                  }
+                  val lower = word.lowercase()
+                  val isCapitalized = word.first().isUpperCase()
+                  val results = mutableListOf<String>()
+
+                  if (layout.isCyrillic) {
+                      KbConfig.CYRILLIC_AUTO_FIX[lower]?.let { results.add(it) }
+                      val converted = KbConfig.latinToCyrillic(lower)
+                      if (converted != lower) results.add(converted)
+                      KbConfig.CYRILLIC_DICTIONARY.filter { it.startsWith(lower) && it !in results }
+                          .take(3).forEach { results.add(it) }
+                  } else {
+                      KbConfig.AUTO_FIX_MAP[lower]?.let { results.add(it) }
+                      val converted = lower
+                          .replace("o'", "ö").replace("oʻ", "ö")
+                          .replace("g'", "ğ").replace("gʻ", "ğ")
+                          .replace("sh", "ş").replace("ch", "ç")
+                      if (converted != lower && converted !in results) results.add(converted)
+                      KbConfig.DICTIONARY_WORDS.filter { it.startsWith(lower) || it.startsWith(converted) }
+                          .distinct().filter { it !in results }.take(3).forEach { results.add(it) }
+                  }
+
+                  if (lower !in results) results.add(lower)
+                  return results.take(3).map { w ->
+                      if (isCapitalized) w.replaceFirstChar { it.uppercase() } else w
+                  }
+              }
+
+              private fun replaceCurrentWordWith(newWord: String, saveUndo: Boolean = false) {
+                  val ic = currentInputConnection ?: return
+                  val cur = getCurrentWordBeingTyped()
+                  if (cur.isNotEmpty()) {
+                      if (saveUndo && cur != newWord) {
+                          lastAutoReplacedOriginal = cur
+                          lastAutoReplacedTarget = newWord
+                      }
+                      ic.deleteSurroundingText(cur.length, 0)
+                  }
+                  ic.commitText("$newWord ", 1)
+                  updateShiftStateFromEditor()
+                  renderKeyboardUI()
+              }
+
+              private fun undoLastAutoReplace(original: String, target: String) {
+                  val ic = currentInputConnection ?: return
+                  val before = ic.getTextBeforeCursor(target.length + 2, 0)?.toString() ?: ""
+                  if (before.endsWith("$target ")) {
+                      ic.deleteSurroundingText(target.length + 1, 0)
+                      ic.commitText("$original ", 1)
+                  } else if (before.endsWith(target)) {
+                      ic.deleteSurroundingText(target.length, 0)
+                      ic.commitText(original, 1)
+                  }
+                  lastAutoReplacedOriginal = null
+                  lastAutoReplacedTarget = null
+                  renderKeyboardUI()
+              }
+
+              private fun buildLettersView(board: LinearLayout, theme: KbTheme) {
+                  val layoutDef = getActiveLayout()
+                  val showNumRow = prefs.getBoolean(KbConfig.KEY_NUM_ROW, true)
+                  val fontScalePct = prefs.getInt(KbConfig.KEY_FONT_SCALE, 130)
+                  val fontScale = fontScalePct / 100f
+                  val heightScale = prefs.getInt(KbConfig.KEY_KEY_HEIGHT, 115) / 100f
+                  val keyHeightDp = (46 * heightScale).toInt().coerceIn(42, 68)
+
+                  if (showNumRow) {
+                      val numRow = createRowLayout(dp(38))
+                      listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0").forEach { n ->
+                          numRow.addView(createTouchDotCharKey(n, null, theme, 1f, 15.5f * fontScale))
+                      }
+                      board.addView(numRow)
+                  }
+
+                  val row1 = createRowLayout(dp(keyHeightDp))
+                  val r1Keys = layoutDef.rows[0]
+                  val baseSp1 = if (r1Keys.size > 10) 15.5f else 17.5f
+                  r1Keys.forEach { k ->
+                      val hint = KbConfig.POPUP_ALTS[k]?.firstOrNull()
+                      row1.addView(createTouchDotCharKey(k, hint, theme, 1f, baseSp1 * fontScale))
+                  }
+                  board.addView(row1)
+
+                  val row2 = createRowLayout(dp(keyHeightDp))
+                  val r2Keys = layoutDef.rows[1]
+                  val baseSp2 = if (r2Keys.size > 10) 15.5f else 17.5f
+                  r2Keys.forEach { k ->
+                      val hint = KbConfig.POPUP_ALTS[k]?.firstOrNull()
+                      row2.addView(createTouchDotCharKey(k, hint, theme, 1f, baseSp2 * fontScale))
+                  }
+                  board.addView(row2)
+
+                  val row3 = createRowLayout(dp(keyHeightDp))
+                  val shiftLabel = when {
+                      isCapsLock -> "⇪"
+                      isShifted -> "⬆️"
+                      else -> "⇧"
+                  }
+                  val shiftBg = if (isShifted || isCapsLock) theme.accentBg else theme.specKeyBg
+                  val shiftTxt = if (isShifted || isCapsLock) theme.accentText else theme.keyText
+                  row3.addView(createActionKey(shiftLabel, shiftBg, shiftTxt, 1.35f) { handleShiftPress() })
+
+                  val r3Keys = layoutDef.rows[2]
+                  val baseSp3 = if (r3Keys.size > 9) 15f else 17.5f
+                  r3Keys.forEach { k ->
+                      val hint = KbConfig.POPUP_ALTS[k]?.firstOrNull()
+                      row3.addView(createTouchDotCharKey(k, hint, theme, 1f, baseSp3 * fontScale))
+                  }
+
+                  row3.addView(createRepeatableBackspaceKey(theme, 1.35f))
+                  board.addView(row3)
+                  board.addView(buildBottomActionRow(theme, layoutDef.badge))
+              }
+
+              private fun createTouchDotCharKey(
+                  rawKey: String,
+                  subHint: String?,
+                  theme: KbTheme,
+                  weight: Float,
+                  textSp: Float
+              ): View {
+                  val displayChar = if (isShifted || isCapsLock) rawKey.uppercase() else rawKey
+                  val alts = KbConfig.POPUP_ALTS[rawKey]
+                  val keyView = TouchDotKeyView(this, rawKey, displayChar, subHint, theme, textSp.coerceIn(14f, 34f))
+
+                  keyView.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight).apply {
+                      setMargins(dp(2), dp(2), dp(2), dp(2))
+                  }
+
+                  var longPressed = false
+                  val longPressHandler = Handler(Looper.getMainLooper())
+                  val longPressRunnable = Runnable {
+                      if (!alts.isNullOrEmpty()) {
+                          longPressed = true
+                          vibrateKey()
+                          val altChar = alts.first()
+                          val outAlt = if (isShifted || isCapsLock) altChar.uppercase() else altChar
+                          showKeyPreviewBubble(keyView, outAlt, false, theme)
+                          commitCharacter(altChar)
+                      }
+                  }
+
+                  keyView.setOnTouchListener { v, event ->
+                      when (event.actionMasked) {
+                          MotionEvent.ACTION_DOWN -> {
+                              longPressed = false
+                              keyView.isPressedDown = true
+                              vibrateKey()
+                              showKeyPreviewBubble(v, displayChar, !alts.isNullOrEmpty(), theme)
+                              longPressHandler.postDelayed(longPressRunnable, 370)
+                              true
+                          }
+                          MotionEvent.ACTION_UP -> {
+                              longPressHandler.removeCallbacks(longPressRunnable)
+                              keyView.isPressedDown = false
+                              dismissKeyPreview()
+                              if (!longPressed) {
+                                  commitCharacter(rawKey)
+                              }
+                              true
+                          }
+                          MotionEvent.ACTION_CANCEL -> {
+                              longPressHandler.removeCallbacks(longPressRunnable)
+                              keyView.isPressedDown = false
+                              dismissKeyPreview()
+                              true
+                          }
+                          else -> false
+                      }
+                  }
+                  return keyView
+              }
+
+              private fun buildTranslatorView(board: LinearLayout, theme: KbTheme) {
+                  val box = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setPadding(dp(8), dp(4), dp(8), dp(8))
+                  }
+
+                  val header = TextView(this).apply {
+                      text = "G文  Aqlli Tarjimon va Alifbo Oʻgirgich"
+                      setTextColor(KbConfig.safeColor(theme.keyText))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)
+                      typeface = Typeface.DEFAULT_BOLD
+                      setPadding(dp(4), dp(2), dp(4), dp(6))
+                  }
+                  box.addView(header)
+
+                  val ic = currentInputConnection
+                  val fullBefore = ic?.getTextBeforeCursor(250, 0)?.toString()?.trim() ?: ""
+                  val sampleText = if (fullBefore.isNotEmpty()) fullBefore else "assalomu alaykum"
+
+                  val quickHit = KbConfig.QUICK_TRANSLATE[sampleText.lowercase()]
+                  val previewCard = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      background = roundedBg(theme.specKeyBg, 12f)
+                      setPadding(dp(12), dp(8), dp(12), dp(8))
+                      layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                          setMargins(0, 0, 0, dp(8))
+                      }
+                  }
+
+                  val srcLabel = TextView(this).apply {
+                      text = "Matn: \"$sampleText\""
+                      setTextColor(KbConfig.safeColor(theme.accentBg))
+                      typeface = Typeface.DEFAULT_BOLD
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                  }
+                  previewCard.addView(srcLabel)
+
+                  if (quickHit != null) {
+                      val (en, tr, ru) = quickHit
+                      val transRow = LinearLayout(this).apply {
+                          orientation = LinearLayout.HORIZONTAL
+                          setPadding(0, dp(6), 0, 0)
+                      }
+                      listOf("🇬🇧 $en" to en, "🇹🇷 $tr" to tr, "🇷🇺 $ru" to ru).forEach { (lbl, valTxt) ->
+                          val b = Button(this).apply {
+                              text = lbl
+                              isAllCaps = false
+                              setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
+                              setTextColor(KbConfig.safeColor(theme.keyText))
+                              background = roundedBg(theme.keyBg, 8f)
+                              layoutParams = LinearLayout.LayoutParams(0, dp(34), 1f).apply { setMargins(dp(2), 0, dp(2), 0) }
+                              setOnClickListener {
+                                  vibrateKey()
+                                  if (fullBefore.isNotEmpty()) ic?.deleteSurroundingText(fullBefore.length, 0)
+                                  ic?.commitText(valTxt, 1)
+                                  currentMode = ViewMode.LETTERS
+                                  renderKeyboardUI()
+                              }
+                          }
+                          transRow.addView(b)
+                      }
+                      previewCard.addView(transRow)
+                  }
+                  box.addView(previewCard)
+
+                  val convRow = createRowLayout(dp(44))
+                  convRow.addView(createActionKey("🔄 Matnni КИРИЛЛга oʻgirish", theme.keyBg, theme.keyText, 1f) {
+                      if (fullBefore.isNotEmpty()) {
+                          val cyr = KbConfig.latinToCyrillic(fullBefore)
+                          ic?.deleteSurroundingText(fullBefore.length, 0)
+                          ic?.commitText(cyr, 1)
+                          currentMode = ViewMode.LETTERS
+                          renderKeyboardUI()
+                      }
+                  })
+                  convRow.addView(createActionKey("🔄 Matnni YANGI LOTINga oʻgirish", theme.keyBg, theme.keyText, 1f) {
+                      if (fullBefore.isNotEmpty()) {
+                          val lat = KbConfig.cyrillicToNewLatin(fullBefore)
+                          ic?.deleteSurroundingText(fullBefore.length, 0)
+                          ic?.commitText(lat, 1)
+                          currentMode = ViewMode.LETTERS
+                          renderKeyboardUI()
+                      }
+                  })
+                  box.addView(convRow)
+
+                  val externalRow = createRowLayout(dp(44))
+                  externalRow.addView(createActionKey("🇺🇿 Tilmoch AI da tarjima", theme.accentBg, theme.accentText, 1f) {
+                      openExternalUrl("https://tilmoch.ai")
+                  })
+                  externalRow.addView(createActionKey("🌐 Google Translate", theme.specKeyBg, theme.keyText, 1f) {
+                      val encoded = Uri.encode(sampleText)
+                      openExternalUrl("https://translate.google.com/?sl=uz&tl=en&text=$encoded&op=translate")
+                  })
+                  box.addView(externalRow)
+
+                  val backRow = createRowLayout(dp(40))
+                  backRow.addView(createActionKey("⬅️ Klaviaturaga qaytish (ABC)", theme.specKeyBg, theme.keyText, 1f) {
+                      currentMode = ViewMode.LETTERS
+                      renderKeyboardUI()
+                  })
+                  box.addView(backRow)
+                  board.addView(box)
+              }
+
+              private fun openExternalUrl(url: String) {
+                  try {
+                      val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                      }
+                      startActivity(intent)
+                  } catch (_: Exception) {}
+              }
+
+              private fun buildSymbolsView1(board: LinearLayout, theme: KbTheme) {
+                  val rows = listOf(
+                      listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
+                      listOf("@", "#", "₺", "_", "&", "-", "+", "(", ")", "/"),
+                      listOf("=\\<", "*", "\"", "'", ":", ";", "!", "?", "⌫")
+                  )
+                  rows.forEach { r ->
+                      val rowLayout = createRowLayout(dp(46))
+                      r.forEach { token ->
+                          when (token) {
+                              "=\\<" -> rowLayout.addView(createActionKey("=\\<", theme.specKeyBg, theme.keyText, 1.3f) {
+                                  currentMode = ViewMode.SYMBOLS_2
+                                  renderKeyboardUI()
+                              })
+                              "⌫" -> rowLayout.addView(createRepeatableBackspaceKey(theme, 1.3f))
+                              else -> rowLayout.addView(createTouchDotCharKey(token, null, theme, 1f, 18f))
+                          }
+                      }
+                      board.addView(rowLayout)
+                  }
+                  board.addView(buildSymbolsBottomRow(theme))
+              }
+
+              private fun buildSymbolsView2(board: LinearLayout, theme: KbTheme) {
+                  val rows = listOf(
+                      listOf("~", "`", "|", "•", "√", "π", "÷", "×", "§", "Δ"),
+                      listOf("£", "€", "$", "¢", "^", "°", "=", "{", "}", "\\"),
+                      listOf("?123", "%", "©", "®", "™", "✓", "[", "]", "⌫")
+                  )
+                  rows.forEach { r ->
+                      val rowLayout = createRowLayout(dp(46))
+                      r.forEach { token ->
+                          when (token) {
+                              "?123" -> rowLayout.addView(createActionKey("?123", theme.specKeyBg, theme.keyText, 1.3f) {
+                                  currentMode = ViewMode.SYMBOLS_1
+                                  renderKeyboardUI()
+                              })
+                              "⌫" -> rowLayout.addView(createRepeatableBackspaceKey(theme, 1.3f))
+                              else -> rowLayout.addView(createTouchDotCharKey(token, null, theme, 1f, 18f))
+                          }
+                      }
+                      board.addView(rowLayout)
+                  }
+                  board.addView(buildSymbolsBottomRow(theme))
+              }
+
+              private fun buildNumpadView(board: LinearLayout, theme: KbTheme) {
+                  val gridRows = listOf(
+                      listOf("+", "1", "2", "3", "%"),
+                      listOf("-", "4", "5", "6", "␣"),
+                      listOf("*", "7", "8", "9", "⌫"),
+                      listOf("ABC", ",", "0", "=", "⏎")
+                  )
+                  gridRows.forEach { r ->
+                      val rowLayout = createRowLayout(dp(50))
+                      r.forEach { token ->
+                          when (token) {
+                              "ABC" -> rowLayout.addView(createActionKey("ABC", theme.specKeyBg, theme.keyText, 1f) {
+                                  currentMode = ViewMode.LETTERS
+                                  renderKeyboardUI()
+                              })
+                              "␣" -> rowLayout.addView(createActionKey("␣", theme.specKeyBg, theme.keyText, 1f) {
+                                  currentInputConnection?.commitText(" ", 1)
+                              })
+                              "⌫" -> rowLayout.addView(createRepeatableBackspaceKey(theme, 1f))
+                              "⏎" -> rowLayout.addView(createActionKey("🔍", theme.accentBg, theme.accentText, 1f) { handleEnter() })
+                              else -> {
+                                  val weight = if (token in listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")) 1.35f else 0.9f
+                                  rowLayout.addView(createTouchDotCharKey(token, null, theme, weight, 21f))
+                              }
+                          }
+                      }
+                      board.addView(rowLayout)
+                  }
+              }
+
+              private fun buildEmojiView(board: LinearLayout, theme: KbTheme) {
+                  val header = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      gravity = Gravity.CENTER_VERTICAL
+                      setPadding(dp(8), dp(4), dp(8), dp(4))
+                  }
+                  header.addView(createActionKey("← ABC", theme.specKeyBg, theme.keyText, 0.3f) {
+                      currentMode = ViewMode.LETTERS
+                      renderKeyboardUI()
+                  })
+                  val title = TextView(this).apply {
+                      text = "  Emojilar"
+                      setTextColor(KbConfig.safeColor(theme.keyText))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                      typeface = Typeface.DEFAULT_BOLD
+                      layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.5f)
+                  }
+                  header.addView(title)
+                  header.addView(createRepeatableBackspaceKey(theme, 0.2f))
+                  board.addView(header)
+
+                  KbConfig.EMOJIS.chunked(8).take(4).forEach { chunk ->
+                      val r = createRowLayout(dp(44))
+                      chunk.forEach { em ->
+                          r.addView(createActionKey(em, theme.keyBg, theme.keyText, 1f) {
+                              currentInputConnection?.commitText(em, 1)
+                          })
+                      }
+                      board.addView(r)
+                  }
+              }
+
+              private fun buildQuickMenuView(board: LinearLayout, theme: KbTheme) {
+                  val grid = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setPadding(dp(8), dp(6), dp(8), dp(6))
+                  }
+
+                  fun tilePair(t1: String, act1: () -> Unit, t2: String, act2: () -> Unit): LinearLayout {
+                      val row = createRowLayout(dp(50))
+                      row.addView(createActionKey(t1, theme.keyBg, theme.keyText, 1f, act1))
+                      row.addView(createActionKey(t2, theme.keyBg, theme.keyText, 1f, act2))
+                      return row
+                  }
+
+                  val curScale = prefs.getInt(KbConfig.KEY_FONT_SCALE, 130)
+                  val vibOn = prefs.getBoolean(KbConfig.KEY_VIBRATE_ENABLED, true)
+
+                  grid.addView(tilePair(
+                      "🔤 Harf: ${curScale}%", {
+                          val next = when {
+                              curScale < 130 -> 130
+                              curScale < 155 -> 155
+                              curScale < 185 -> 185
+                              else -> 115
+                          }
+                          prefs.edit().putInt(KbConfig.KEY_FONT_SCALE, next).apply()
+                          currentMode = ViewMode.LETTERS
+                          renderKeyboardUI()
+                      },
+                      "🎨 Mavzular", { currentMode = ViewMode.THEME_PICKER; renderKeyboardUI() }
+                  ))
+                  grid.addView(tilePair(
+                      "⌨️ Maket: ${getActiveLayout().badge}", { cycleNextLayout() },
+                      "G文 Tarjima & Kirill", { currentMode = ViewMode.TRANSLATOR; renderKeyboardUI() }
+                  ))
+                  grid.addView(tilePair(
+                      if (vibOn) "📳 Vibratsiya: ON" else "📴 Vibratsiya: OFF", {
+                          prefs.edit().putBoolean(KbConfig.KEY_VIBRATE_ENABLED, !vibOn).apply()
+                          renderKeyboardUI()
+                      },
+                      "⚙️ Sozlamalar", { openSettingsApp() }
+                  ))
+
+                  board.addView(grid)
+              }
+
+              private fun buildThemePickerView(board: LinearLayout, theme: KbTheme) {
+                  val wrap = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setPadding(dp(8), dp(4), dp(8), dp(4))
+                  }
+                  KbConfig.THEMES.chunked(3).forEach { group ->
+                      val row = createRowLayout(dp(44))
+                      group.forEach { t ->
+                          val active = t.id == theme.id
+                          val label = if (active) "✓ ${t.name}" else t.name
+                          row.addView(createActionKey(label, t.keyBg, t.keyText, 1f) {
+                              prefs.edit().putString(KbConfig.KEY_THEME, t.id).apply()
+                              currentMode = ViewMode.LETTERS
+                              renderKeyboardUI()
+                          })
+                      }
+                      wrap.addView(row)
+                  }
+                  board.addView(wrap)
+              }
+
+              private fun buildBottomActionRow(theme: KbTheme, spaceLabel: String): View {
+                  val row = createRowLayout(dp(46))
+                  val showComma = prefs.getBoolean(KbConfig.KEY_COMMA_KEY, true)
+                  val showEmoji = prefs.getBoolean(KbConfig.KEY_EMOJI_KEY, true)
+                  val showLang = prefs.getBoolean(KbConfig.KEY_LANG_KEY, true)
+                  val showPeriod = prefs.getBoolean(KbConfig.KEY_PERIOD_KEY, true)
+
+                  row.addView(createActionKey("?123", theme.specKeyBg, theme.keyText, 1.3f) {
+                      currentMode = ViewMode.SYMBOLS_1
+                      renderKeyboardUI()
+                  })
+                  if (showComma) row.addView(createTouchDotCharKey(",", null, theme, 0.85f, 18f))
+                  if (showEmoji) {
+                      row.addView(createActionKey("😊", theme.specKeyBg, theme.keyText, 0.9f) {
+                          currentMode = ViewMode.EMOJI
+                          renderKeyboardUI()
+                      })
+                  }
+                  if (showLang) {
+                      row.addView(createActionKey("🌐", theme.specKeyBg, theme.keyText, 0.9f) {
+                          cycleNextLayout()
+                      })
+                  }
+
+                  val spaceBtn = createActionKey(spaceLabel, theme.keyBg, theme.keyText, 3.6f) { handleSpace() }
+                  spaceBtn.setOnLongClickListener {
+                      vibrateKey()
+                      cycleNextLayout()
+                      true
+                  }
+                  row.addView(spaceBtn)
+
+                  if (showPeriod) row.addView(createTouchDotCharKey(".", "?", theme, 0.85f, 18f))
+                  row.addView(createActionKey("⏎", theme.accentBg, theme.accentText, 1.45f) { handleEnter() })
+                  return row
+              }
+
+              private fun buildSymbolsBottomRow(theme: KbTheme): View {
+                  val row = createRowLayout(dp(46))
+                  row.addView(createActionKey("ABC", theme.specKeyBg, theme.keyText, 1.3f) {
+                      currentMode = ViewMode.LETTERS
+                      renderKeyboardUI()
+                  })
+                  row.addView(createTouchDotCharKey(",", null, theme, 0.9f, 18f))
+                  row.addView(createActionKey("1234", theme.specKeyBg, theme.keyText, 1.1f) {
+                      currentMode = ViewMode.NUMPAD
+                      renderKeyboardUI()
+                  })
+                  row.addView(createActionKey(getActiveLayout().badge, theme.keyBg, theme.keyText, 3.5f) { handleSpace() })
+                  row.addView(createTouchDotCharKey(".", null, theme, 0.9f, 18f))
+                  row.addView(createActionKey("⏎", theme.accentBg, theme.accentText, 1.4f) { handleEnter() })
+                  return row
+              }
+
+              private fun createRowLayout(heightPx: Int): LinearLayout {
+                  return LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, heightPx).apply {
+                          setMargins(0, dp(2), 0, dp(2))
+                      }
+                  }
+              }
+
+              private fun createActionKey(
+                  label: String,
+                  bgHex: String,
+                  txtHex: String,
+                  weight: Float,
+                  onClick: () -> Unit
+              ): Button {
+                  return Button(this).apply {
+                      text = label
+                      isAllCaps = false
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
+                      typeface = Typeface.DEFAULT_BOLD
+                      setTextColor(KbConfig.safeColor(txtHex))
+                      setPadding(dp(2), 0, dp(2), 0)
+                      background = roundedBg(bgHex, 8f)
+                      layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight).apply {
+                          setMargins(dp(2), dp(1), dp(2), dp(1))
+                      }
+                      setOnClickListener {
+                          vibrateKey()
+                          onClick()
+                      }
+                  }
+              }
+
+              private fun createRepeatableBackspaceKey(theme: KbTheme, weight: Float): Button {
+                  return Button(this).apply {
+                      text = "⌫"
+                      isAllCaps = false
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                      setTextColor(KbConfig.safeColor(theme.keyText))
+                      background = roundedBg(theme.specKeyBg, 8f)
+                      setPadding(0, 0, 0, 0)
+                      layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight).apply {
+                          setMargins(dp(2), dp(1), dp(2), dp(1))
+                      }
+                      setOnTouchListener { _, event ->
+                          when (event.action) {
+                              MotionEvent.ACTION_DOWN -> {
+                                  vibrateKey()
+                                  handleBackspace()
+                                  isDeleting = true
+                                  deleteHandler.postDelayed(deleteRunnable, 380)
+                                  true
+                              }
+                              MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                                  isDeleting = false
+                                  deleteHandler.removeCallbacks(deleteRunnable)
+                                  true
+                              }
+                              else -> false
+                          }
+                      }
+                  }
+              }
+
+              private fun commitCharacter(raw: String) {
+                  val ic = currentInputConnection ?: return
+                  val out = if (isShifted || isCapsLock) raw.uppercase() else raw
+                  lastAutoReplacedOriginal = null
+                  lastAutoReplacedTarget = null
+                  ic.commitText(out, 1)
+
+                  if (isShifted && !isCapsLock) {
+                      isShifted = false
+                  }
+                  renderKeyboardUI()
+              }
+
+              private fun handleShiftPress() {
+                  val now = System.currentTimeMillis()
+                  if (now - lastShiftClickTime < 320) {
+                      isCapsLock = true
+                      isShifted = true
+                  } else if (isCapsLock) {
+                      isCapsLock = false
+                      isShifted = false
+                  } else {
+                      isShifted = !isShifted
+                  }
+                  lastShiftClickTime = now
+                  renderKeyboardUI()
+              }
+
+              private fun handleBackspace() {
+                  val ic = currentInputConnection ?: return
+                  val selected = ic.getSelectedText(0)
+                  if (!selected.isNullOrEmpty()) {
+                      ic.commitText("", 1)
+                  } else {
+                      ic.deleteSurroundingText(1, 0)
+                  }
+                  updateShiftStateFromEditor()
+                  renderKeyboardUI()
+              }
+
+              private fun handleSpace() {
+                  val ic = currentInputConnection ?: return
+                  val autoCorrect = prefs.getBoolean(KbConfig.KEY_AUTO_CORRECT, true)
+
+                  if (autoCorrect && !isPasswordInput && currentMode == ViewMode.LETTERS) {
+                      val curWord = getCurrentWordBeingTyped()
+                      if (curWord.length >= 2) {
+                          val lower = curWord.lowercase()
+                          val layout = getActiveLayout()
+                          val fixed = if (layout.isCyrillic) KbConfig.CYRILLIC_AUTO_FIX[lower] else KbConfig.AUTO_FIX_MAP[lower]
+                          if (fixed != null && fixed != lower) {
+                              val outWord = if (curWord.first().isUpperCase()) fixed.replaceFirstChar { it.uppercase() } else fixed
+                              lastAutoReplacedOriginal = curWord
+                              lastAutoReplacedTarget = outWord
+                              ic.deleteSurroundingText(curWord.length, 0)
+                              ic.commitText("$outWord ", 1)
+                              updateShiftStateFromEditor()
+                              renderKeyboardUI()
+                              return
+                          }
+                      }
+                  }
+
+                  val now = System.currentTimeMillis()
+                  if (now - lastSpaceClickTime < 280 && !isPasswordInput) {
+                      val before = ic.getTextBeforeCursor(2, 0) ?: ""
+                      if (before.endsWith(" ") && before.length == 2 && before[0].isLetterOrDigit()) {
+                          ic.deleteSurroundingText(1, 0)
+                          ic.commitText(". ", 1)
+                          lastSpaceClickTime = 0L
+                          updateShiftStateFromEditor()
+                          renderKeyboardUI()
+                          return
+                      }
+                  }
+                  lastSpaceClickTime = now
+                  ic.commitText(" ", 1)
+                  updateShiftStateFromEditor()
+                  renderKeyboardUI()
+              }
+
+              private fun handleEnter() {
+                  val ic = currentInputConnection ?: return
+                  val info = currentInputEditorInfo
+                  val action = info?.imeOptions?.and(EditorInfo.IME_MASK_ACTION) ?: EditorInfo.IME_ACTION_NONE
+                  if (action != EditorInfo.IME_ACTION_NONE && action != EditorInfo.IME_ACTION_UNSPECIFIED) {
+                      ic.performEditorAction(action)
+                  } else {
+                      ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
+                      ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
+                  }
+              }
+
+              private fun cycleNextLayout() {
+                  val curId = getActiveLayout().id
+                  val idx = KbConfig.LAYOUTS.indexOfFirst { it.id == curId }
+                  val next = KbConfig.LAYOUTS[(idx + 1) % KbConfig.LAYOUTS.size]
+                  prefs.edit().putString(KbConfig.KEY_LAYOUT, next.id).apply()
+                  currentMode = ViewMode.LETTERS
+                  Toast.makeText(this, "Maket: ${next.title}", Toast.LENGTH_SHORT).show()
+                  renderKeyboardUI()
+              }
+
+              private fun pasteFromClipboard() {
+                  val cm = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
+                  val item = cm.primaryClip?.getItemAt(0)?.text?.toString()
+                  if (!item.isNullOrEmpty()) {
+                      currentInputConnection?.commitText(item, 1)
+                  } else {
+                      Toast.makeText(this, "Bufer boʻsh", Toast.LENGTH_SHORT).show()
+                  }
+              }
+
+              private fun openSettingsApp() {
+                  try {
+                      val intent = Intent(this, SetupActivity::class.java).apply {
+                          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                      }
+                      startActivity(intent)
+                  } catch (_: Exception) {}
+              }
+
+              private fun updateShiftStateFromEditor() {
+                  if (isCapsLock || isPasswordInput) return
+                  val ic = currentInputConnection ?: return
+                  val before = ic.getTextBeforeCursor(3, 0)?.toString() ?: ""
+                  isShifted = before.isEmpty() || before.endsWith(". ") || before.endsWith("! ") || before.endsWith("? ") || before.endsWith("\n")
+              }
+
+              private fun vibrateKey(light: Boolean = false) {
+                  val enabled = prefs.getBoolean(KbConfig.KEY_VIBRATE_ENABLED, true)
+                  if (!enabled) return
+                  val baseDuration = prefs.getInt(KbConfig.KEY_VIBRATE_STRENGTH, 18).toLong().coerceIn(5L, 60L)
+                  val dur = if (light) (baseDuration / 2).coerceAtLeast(5L) else baseDuration
+                  try {
+                      val vib = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
+                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                          vib.vibrate(VibrationEffect.createOneShot(dur, VibrationEffect.DEFAULT_AMPLITUDE))
+                      } else {
+                          @Suppress("DEPRECATION")
+                          vib.vibrate(dur)
+                      }
+                  } catch (_: Exception) {}
+              }
+
+              private fun roundedBg(hex: String, radiusDp: Float): GradientDrawable {
+                  return GradientDrawable().apply {
+                      setColor(KbConfig.safeColor(hex))
+                      cornerRadius = dp(radiusDp.toInt()).toFloat()
+                  }
+              }
+
+              private fun dp(value: Int): Int {
+                  return TypedValue.applyDimension(
+                      TypedValue.COMPLEX_UNIT_DIP,
+                      value.toFloat(),
+                      resources.displayMetrics
+                  ).toInt()
+              }
+          }
+          EOF
+
+          # 11. SetupActivity.kt (android.view.View importi qo'shilgan va to'liq ishlaydigan versiya)
+          write_file app/src/main/java/com/alharitm/uzbekfkeyboard/SetupActivity.kt << 'EOF'
+          package com.alharitm.uzbekfkeyboard
+
+          import android.app.Activity
+          import android.content.Context
+          import android.content.Intent
+          import android.content.SharedPreferences
+          import android.graphics.Color
+          import android.graphics.Typeface
+          import android.graphics.drawable.GradientDrawable
+          import android.os.Bundle
+          import android.provider.Settings
+          import android.text.InputType
+          import android.util.TypedValue
+          import android.view.Gravity
+          import android.view.View
+          import android.view.ViewGroup
+          import android.view.inputmethod.InputMethodManager
+          import android.widget.Button
+          import android.widget.EditText
+          import android.widget.LinearLayout
+          import android.widget.ScrollView
+          import android.widget.SeekBar
+          import android.widget.Switch
+          import android.widget.TextView
+
+          class SetupActivity : Activity() {
+              private lateinit var prefs: SharedPreferences
+
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  prefs = getSharedPreferences(KbConfig.PREFS_NAME, Context.MODE_PRIVATE)
+                  renderSettingsScreen()
+              }
+
+              private fun renderSettingsScreen() {
+                  val scroll = ScrollView(this).apply {
+                      setBackgroundColor(Color.parseColor("#F4F6FA"))
+                  }
+                  val root = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setPadding(dp(18), dp(22), dp(18), dp(40))
+                  }
+
+                  val headerCard = cardContainer("#0F172A")
+                  val badgeRow = TextView(this).apply {
+                      text = "🇺🇿  Ö • Ğ • Ş • Ç • Ў • Қ   |   ARAGON v4.5"
+                      setTextColor(Color.parseColor("#38BDF8"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                      typeface = Typeface.DEFAULT_BOLD
+                  }
+                  val title = TextView(this).apply {
+                      text = "Oʻzbek F-Klaviatura Pro"
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
+                      typeface = Typeface.DEFAULT_BOLD
+                      setTextColor(Color.WHITE)
+                      setPadding(0, dp(4), 0, dp(4))
+                  }
+                  val sub = TextView(this).apply {
+                      text = "Yangi Lotin, Oʻzbek F, QWERTY va Kirill • Popup harf • Parol himoyasi • Katta harflar (130%–200%)"
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                      setTextColor(Color.parseColor("#94A3B8"))
+                  }
+                  headerCard.addView(badgeRow)
+                  headerCard.addView(title)
+                  headerCard.addView(sub)
+                  root.addView(headerCard)
+
+                  val stepCard = cardContainer("#FFFFFF")
+                  stepCard.addView(sectionLabel("1. Klaviaturani faollashtirish va sinash"))
+                  val rowBtns = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+
+                  val btnEnable = Button(this).apply {
+                      text = "1. Yoqish"
+                      isAllCaps = false
+                      setTextColor(Color.WHITE)
+                      background = pillDrawable("#2563EB")
+                      layoutParams = LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(0, 0, dp(6), 0) }
+                      setOnClickListener { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
+                  }
+                  val btnSelect = Button(this).apply {
+                      text = "2. Tanlash"
+                      isAllCaps = false
+                      setTextColor(Color.WHITE)
+                      background = pillDrawable("#059669")
+                      layoutParams = LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(dp(6), 0, 0, 0) }
+                      setOnClickListener {
+                          val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                          imm.showInputMethodPicker()
+                      }
+                  }
+                  rowBtns.addView(btnEnable)
+                  rowBtns.addView(btnSelect)
+                  stepCard.addView(rowBtns)
+
+                  val testInput = EditText(this).apply {
+                      hint = "✍️ Oddiy matn yozib sinab koʻring (masalan: assalomu)..."
+                      setTextColor(Color.parseColor("#0F172A"))
+                      setHintTextColor(Color.parseColor("#64748B"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                      setPadding(dp(14), dp(12), dp(14), dp(12))
+                      background = pillDrawable("#F1F5F9")
+                      layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                          setMargins(0, dp(12), 0, dp(6))
+                      }
+                  }
+                  val passInput = EditText(this).apply {
+                      hint = "🔒 Parol himoyasini sinab koʻring (yulduzcha rejimi)..."
+                      inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                      setTextColor(Color.parseColor("#0F172A"))
+                      setHintTextColor(Color.parseColor("#64748B"))
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                      setPadding(dp(14), dp(12), dp(14), dp(12))
+                      background = pillDrawable("#FEF2F2")
+                  }
+                  stepCard.addView(testInput)
+                  stepCard.addView(passInput)
+                  root.addView(stepCard)
+
+                  val fontCard = cardContainer("#FFFFFF")
+                  fontCard.addView(sectionLabel("2. Harf Kattaligi (Standart: 130%, Maksimal: 200%)"))
+                  val curFontScale = prefs.getInt(KbConfig.KEY_FONT_SCALE, 130)
+                  val fontTitle = TextView(this).apply {
+                      text = "Harflar oʻlchami: $curFontScale% (Birlamchi standart: 130%)"
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                      typeface = Typeface.DEFAULT_BOLD
+                      setTextColor(Color.parseColor("#0F172A"))
+                      setPadding(0, dp(4), 0, dp(6))
+                  }
+                  fontCard.addView(fontTitle)
+
+                  val seek = SeekBar(this).apply {
+                      max = 100
+                      progress = (curFontScale - 100).coerceIn(0, 100)
+                      setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                          override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
+                              val scale = 100 + p
+                              fontTitle.text = "Harflar oʻlchami: $scale% (Birlamchi standart: 130%)"
+                              prefs.edit().putInt(KbConfig.KEY_FONT_SCALE, scale).apply()
+                          }
+                          override fun onStartTrackingTouch(s: SeekBar?) {}
+                          override fun onStopTrackingTouch(s: SeekBar?) {}
+                      })
+                  }
+                  fontCard.addView(seek)
+
+                  val presetRow = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      setPadding(0, dp(8), 0, 0)
+                  }
+                  listOf("Standart (130%)" to 130, "Katta (155%)" to 155, "👁️ Juda Katta (185%)" to 185).forEach { (lbl, sc) ->
+                      val b = Button(this).apply {
+                          text = lbl
+                          isAllCaps = false
+                          setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                          setTextColor(Color.parseColor("#1E293B"))
+                          background = pillDrawable("#E2E8F0")
+                          layoutParams = LinearLayout.LayoutParams(0, dp(38), 1f).apply { setMargins(dp(3), 0, dp(3), 0) }
+                          setOnClickListener {
+                              prefs.edit().putInt(KbConfig.KEY_FONT_SCALE, sc).apply()
+                              renderSettingsScreen()
+                          }
+                      }
+                      presetRow.addView(b)
+                  }
+                  fontCard.addView(presetRow)
+                  root.addView(fontCard)
+
+                  val layoutCard = cardContainer("#FFFFFF")
+                  layoutCard.addView(sectionLabel("3. Klaviatura Joylashuvi (Lotin F, QWERTY va Kirill)"))
+                  val activeLayoutId = prefs.getString(KbConfig.KEY_LAYOUT, "uz_f_v10")
+
+                  KbConfig.LAYOUTS.forEach { l ->
+                      val isSelected = l.id == activeLayoutId
+                      val btn = Button(this).apply {
+                          text = if (isSelected) "✅  ${l.title}" else "⚪  ${l.title}"
+                          isAllCaps = false
+                          gravity = Gravity.START or Gravity.CENTER_VERTICAL
+                          setPadding(dp(14), dp(10), dp(14), dp(10))
+                          setTextColor(if (isSelected) Color.WHITE else Color.parseColor("#1E293B"))
+                          background = pillDrawable(if (isSelected) "#2563EB" else "#F1F5F9")
+                          layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                              setMargins(0, dp(4), 0, dp(4))
+                          }
+                          setOnClickListener {
+                              prefs.edit().putString(KbConfig.KEY_LAYOUT, l.id).apply()
+                              renderSettingsScreen()
+                          }
+                      }
+                      layoutCard.addView(btn)
+                  }
+                  root.addView(layoutCard)
+
+                  val prefCard = cardContainer("#FFFFFF")
+                  prefCard.addView(sectionLabel("4. Tugma Harakati, Haptik va Imlo"))
+                  prefCard.addView(switchRow("Bosilganda harfni tepada chiqarish (Popup)", "Bosilgan harf kattalashib koʻrinadi", KbConfig.KEY_POPUP_PREVIEW, true))
+                  prefCard.addView(switchRow("Oʻzbek imlo tekshiruvi va 'Ortga qaytarish'", "Xato soʻzlarni toʻgʻrilaydi va qaytarish tugmasini chiqaradi", KbConfig.KEY_AUTO_CORRECT, true))
+                  prefCard.addView(switchRow("Haptik aloqa (Vibratsiya)", "Tugma bosilganda yengil tebranish", KbConfig.KEY_VIBRATE_ENABLED, true))
+                  prefCard.addView(switchRow("Raqamlar qatori (1–0)", "Yuqorida raqamlarni doimiy koʻrsatish", KbConfig.KEY_NUM_ROW, true))
+                  prefCard.addView(switchRow("Til almashtirish tugmasi (🌐)", "Lotin va Kirill orasida tezkor oʻtish", KbConfig.KEY_LANG_KEY, true))
+                  root.addView(prefCard)
+
+                  val themeCard = cardContainer("#FFFFFF")
+                  themeCard.addView(sectionLabel("5. Mavzular va Ranglar (Theme)"))
+                  val activeThemeId = prefs.getString(KbConfig.KEY_THEME, "default_dark")
+
+                  KbConfig.THEMES.chunked(2).forEach { pair ->
+                      val r = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+                      pair.forEach { t ->
+                          val selected = t.id == activeThemeId
+                          val b = Button(this).apply {
+                              text = if (selected) "✓ ${t.name}" else t.name
+                              isAllCaps = false
+                              setTextColor(KbConfig.safeColor(t.keyText))
+                              background = GradientDrawable().apply {
+                                  setColor(KbConfig.safeColor(t.boardBg))
+                                  cornerRadius = dp(12).toFloat()
+                                  setStroke(dp(if (selected) 3 else 1), if (selected) Color.parseColor("#2563EB") else Color.parseColor("#CBD5E1"))
+                              }
+                              layoutParams = LinearLayout.LayoutParams(0, dp(52), 1f).apply {
+                                  setMargins(dp(4), dp(4), dp(4), dp(4))
+                              }
+                              setOnClickListener {
+                                  prefs.edit().putString(KbConfig.KEY_THEME, t.id).apply()
+                                  renderSettingsScreen()
+                              }
+                          }
+                          r.addView(b)
+                      }
+                      themeCard.addView(r)
+                  }
+                  root.addView(themeCard)
+
+                  scroll.addView(root)
+                  setContentView(scroll)
+              }
+
+              private fun switchRow(titleText: String, subText: String, prefKey: String, defaultVal: Boolean): View {
+                  val row = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      gravity = Gravity.CENTER_VERTICAL
+                      setPadding(0, dp(8), 0, dp(8))
+                  }
+                  val textCol = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                  }
+                  val t = TextView(this).apply {
+                      text = titleText
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)
+                      typeface = Typeface.DEFAULT_BOLD
+                      setTextColor(Color.parseColor("#0F172A"))
+                  }
+                  val s = TextView(this).apply {
+                      text = subText
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                      setTextColor(Color.parseColor("#64748B"))
+                  }
+                  textCol.addView(t)
+                  textCol.addView(s)
+
+                  val sw = Switch(this).apply {
+                      isChecked = prefs.getBoolean(prefKey, defaultVal)
+                      setOnCheckedChangeListener { _, isChecked ->
+                          prefs.edit().putBoolean(prefKey, isChecked).apply()
+                      }
+                  }
+                  row.addView(textCol)
+                  row.addView(sw)
+                  return row
+              }
+
+              private fun cardContainer(bgHex: String): LinearLayout {
+                  return LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setPadding(dp(16), dp(16), dp(16), dp(16))
+                      background = pillDrawable(bgHex, 16f)
+                      layoutParams = LinearLayout.LayoutParams(
+                          ViewGroup.LayoutParams.MATCH_PARENT,
+                          ViewGroup.LayoutParams.WRAP_CONTENT
+                      ).apply { setMargins(0, 0, 0, dp(14)) }
+                  }
+              }
+
+              private fun sectionLabel(txt: String): TextView {
+                  return TextView(this).apply {
+                      text = txt
+                      setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                      typeface = Typeface.DEFAULT_BOLD
+                      setTextColor(Color.parseColor("#2563EB"))
+                      setPadding(0, 0, 0, dp(8))
+                  }
+              }
+
+              private fun pillDrawable(hex: String, radiusDp: Float = 12f): GradientDrawable {
+                  return GradientDrawable().apply {
+                      setColor(KbConfig.safeColor(hex))
+                      cornerRadius = dp(radiusDp.toInt()).toFloat()
+                  }
+              }
+
+              private fun dp(v: Int): Int {
+                  return TypedValue.applyDimension(
+                      TypedValue.COMPLEX_UNIT_DIP,
+                      v.toFloat(),
+                      resources.displayMetrics
+                  ).toInt()
+              }
+          }
+          EOF
+
+          # 12. Release APK va Google Play Store AAB Paketlarini Kompilyatsiya Qilish
+          gradle assembleRelease bundleRelease --no-daemon --stacktrace
+
+      - name: 6. Release APK paketini yuklash
         uses: actions/upload-artifact@v4
         with:
-          name: Alharitm-Uzbek-F-Aragon-v4.4-Release-APK
+          name: Alharitm-Uzbek-F-Aragon-v4.5-Release-APK
           path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
 
-      - name: 7. Google Play Store AAB va Keystore paketini yukle
+      - name: 7. Google Play Store AAB paketini yuklash
         uses: actions/upload-artifact@v4
         with:
-          name: Google-Play-Store-Aragon-v4.4-Bundle-AAB
-          path: |
-            app/build/outputs/bundle/release/*.aab
-            release-key.jks
+          name: Google-Play-Store-Aragon-v4.5-Bundle-AAB
+          path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+      - name: 8. Play Store ProGuard/R8 Mapping faylini yuklash
+        uses: actions/upload-artifact@v4
+        with:
+          name: Play-Store-Mapping-File
+          path: app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: warn
