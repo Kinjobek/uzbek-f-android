@@ -1,4 +1,4 @@
-name: Build Ozbekca Termilma v1.05 (ALHARITM - Play Store Official)
+name: Build Ozbekca Terilma v1.05 (ALHARITM - Play Store Official)
 on:
   push:
     branches: [ "main", "master" ]
@@ -22,7 +22,7 @@ jobs:
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
-      - name: 5. Ozbekca Termilma v1.05 Loyihasini Yaratish va Kompilyatsiya Qilish
+      - name: 5. Ozbekca Terilma v1.05 Loyihasini Yaratish va Kompilyatsiya Qilish
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -95,7 +95,7 @@ jobs:
                   mavenCentral()
               }
           }
-          rootProject.name = "OzbekcaTermilma"
+          rootProject.name = "OzbekcaTerilma"
           include(":app")
           EOF
           # 4. Root build.gradle
@@ -220,7 +220,7 @@ jobs:
           write_file app/src/main/res/values/strings.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <string name="app_name">Özbekça termılma v1.05</string>
+              <string name="app_name">Özbekça terilma v1.05</string>
           </resources>
           EOF
           write_file app/src/main/res/xml/method.xml << 'EOF'
@@ -229,7 +229,7 @@ jobs:
               android:settingsActivity="com.alharitm.uzbekfkeyboard.SetupActivity"
               android:supportsSwitchingToNextInputMethod="true">
               <subtype
-                  android:label="Özbekça termılma (Ö, Ğ, Ş, Ç)"
+                  android:label="Özbekça terilma (Ö, Ğ, Ş, Ç)"
                   android:imeSubtypeLocale="uz_UZ"
                   android:imeSubtypeMode="keyboard" />
               <subtype
@@ -330,10 +330,10 @@ jobs:
               val isCyrillic: Boolean = false
           )
           object KbConfig {
-              const val APP_TITLE = "Özbekça termılma v1.05"
+              const val APP_TITLE = "Özbekça terilma v1.05"
               const val COMPANY_NAME = "ALHARITM"
               const val COPYRIGHT_SHORT = "© 2026 ALHARITM. Barcha huquqlar himoyalangan."
-              const val PREFS_NAME = "alharitm_ozbekca_termilma_v105"
+              const val PREFS_NAME = "alharitm_ozbekca_terilma_v105"
               const val KEY_THEME = "theme_id"
               const val KEY_LAYOUT = "layout_id"
               const val KEY_NUM_ROW = "show_num_row"
@@ -479,7 +479,7 @@ jobs:
               )
               val DICTIONARY_WORDS = listOf(
                   "assalomu", "alaykum", "özbekiston", "özbek", "töşkent", "yangi", "alifbo",
-                  "termılma", "dastur", "taʼlim", "maʼlumot", "maʼnaviyat", "eʼtibor",
+                  "terilma", "dastur", "taʼlim", "maʼlumot", "maʼnaviyat", "eʼtibor",
                   "yaxşi", "töğri", "böladi", "bölib", "uçun", "bilan", "hamda", "lekin",
                   "şuningdek", "qöşimça", "işlaş", "işonç", "öqiş", "örganiş", "sozlamalar",
                   "harflar", "tugmalar", "tezlik", "aniqlik", "alharitm", "darslar",
@@ -506,7 +506,7 @@ jobs:
                   "yöq" to Triple("No", "Hayır / Yok", "Нет"),
                   "özbekiston" to Triple("Uzbekistan", "Özbekistan", "Узбекистан"),
                   "dastur" to Triple("Application", "Uygulama", "Программа"),
-                  "termılma" to Triple("Keyboard", "Klavye", "Клавиатура"),
+                  "terilma" to Triple("Keyboard", "Klavye", "Клавиатура"),
                   "taʼlim" to Triple("Education", "Eğitim", "Образование"),
                   "maʼlumot" to Triple("Information", "Bilgi", "Информация"),
                   "töğri" to Triple("Correct", "Doğru", "Правильно")
@@ -1204,7 +1204,7 @@ jobs:
                   })
                   box.addView(convRow)
                   val backRow = createRowLayout(dp(40))
-                  backRow.addView(createActionKey("⬅️ Termılmaga qaytish (ABC)", theme.specKeyBg, theme.keyText, 1f) {
+                  backRow.addView(createActionKey("⬅️ Terilmaga qaytish (ABC)", theme.specKeyBg, theme.keyText, 1f) {
                       currentMode = ViewMode.LETTERS
                       renderKeyboardUI()
                   })
@@ -1363,7 +1363,7 @@ jobs:
                       "⚙️ ALHARITM Sozlamalar", { openSettingsApp() }
                   ))
                   val brandFooter = TextView(this).apply {
-                      text = "Özbekça termılma v1.05  •  © 2026 ALHARITM (Sarvarbek Nazarov)"
+                      text = "Özbekça terilma v1.05  •  © 2026 ALHARITM (Sarvarbek Nazarov)"
                       setTextColor(KbConfig.safeColor(theme.accentBg))
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
                       typeface = Typeface.DEFAULT_BOLD
@@ -1700,14 +1700,14 @@ jobs:
                       typeface = Typeface.DEFAULT_BOLD
                   }
                   val title = TextView(this).apply {
-                      text = "Özbekça termılma v1.05"
+                      text = "Özbekça terilma v1.05"
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 23f)
                       typeface = Typeface.DEFAULT_BOLD
                       setTextColor(Color.WHITE)
                       setPadding(0, dp(4), 0, dp(4))
                   }
                   val sub = TextView(this).apply {
-                      text = "Yangi Oʻzbek alifbosi (F va QWERTY) hamda Kirill yozuvi uchun 100% xavfsiz, oflayn intellektual termılma.\nIshlab chiqaruvchi: ALHARITM (Sarvarbek Nazarov)"
+                      text = "Yangi Oʻzbek alifbosi (F va QWERTY) hamda Kirill yozuvi uchun 100% xavfsiz, oflayn intellektual terilma.\nIshlab chiqaruvchi: ALHARITM (Sarvarbek Nazarov)"
                       setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                       setTextColor(Color.parseColor("#CBD5E1"))
                   }
@@ -1716,7 +1716,7 @@ jobs:
                   headerCard.addView(sub)
                   root.addView(headerCard)
                   val stepCard = cardContainer("#FFFFFF")
-                  stepCard.addView(sectionLabel("1. Termılmani faollashtirish va sinash"))
+                  stepCard.addView(sectionLabel("1. Terilmani faollashtirish va sinash"))
                   val rowBtns = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
                   val btnEnable = Button(this).apply {
                       text = "1. Yoqish"
@@ -1855,7 +1855,7 @@ jobs:
                   fontCard.addView(presetRow)
                   root.addView(fontCard)
                   val layoutCard = cardContainer("#FFFFFF")
-                  layoutCard.addView(sectionLabel("4. Termılma Joylashuvi (Lotin F, QWERTY va Kirill)"))
+                  layoutCard.addView(sectionLabel("4. Terilma Joylashuvi (Lotin F, QWERTY va Kirill)"))
                   val activeLayoutId = prefs.getString(KbConfig.KEY_LAYOUT, "uz_f_v10")
                   KbConfig.LAYOUTS.forEach { l ->
                       val isSelected = l.id == activeLayoutId
@@ -1923,7 +1923,7 @@ jobs:
                       setPadding(0, 0, 0, dp(6))
                   }
                   val copyBody = TextView(this).apply {
-                      text = "Dastur nomi: Özbekça termılma v1.05\n" +
+                      text = "Dastur nomi: Özbekça terilma v1.05\n" +
                              "Ishlab chiqaruvchi: ALHARITM kompaniyasi\n" +
                              "Muallif va huquq egasi: Sarvarbek Nazarov\n\n" +
                              "🔒 100% MAXFIYLIK: Ushbu dastur internetga ulanish huquqini (INTERNET permission) talab qilmaydi va toʻliq oflayn ishlaydi. Siz yozgan matnlar, parollar yoki shaxsiy maʼlumotlar hech qachon yigʻilmaydi va hech qayerga uzatilmaydi.\n\n" +
@@ -1952,7 +1952,7 @@ jobs:
                   AlertDialog.Builder(this)
                       .setTitle("Maxfiylik Siyosati (Privacy Policy)")
                       .setMessage(
-                          "Özbekça termılma v1.05 — ALHARITM (Sarvarbek Nazarov)\n\n" +
+                          "Özbekça terilma v1.05 — ALHARITM (Sarvarbek Nazarov)\n\n" +
                           "1. Maʼlumotlarni yigʻmaslik: Ushbu klaviatura ilovasi foydalanuvchilarning hech qanday shaxsiy maʼlumotlarini, yozgan matnlarini, parollarini yoki kontaktlarini yigʻmaydi, saqlamaydi va uchinchi shaxslarga uzatmaydi.\n\n" +
                           "2. 100% Oflayn ishlash: Ilova Android tizimidan INTERNET ruxsatini (android.permission.INTERNET) soʻramaydi. Barcha sozlamalar faqat qurilmaning oʻz ichki xotirasida (SharedPreferences) saqlanadi.\n\n" +
                           "3. Ruxsatlar: Ilova faqat tugma bosilganda tebranish (VIBRATE) funksiyasi uchun ruxsat ishlatadi.\n\n" +
@@ -2034,13 +2034,13 @@ jobs:
       - name: 6. Release APK paketini yuklash
         uses: actions/upload-artifact@v4
         with:
-          name: Alharitm-Ozbekca-Termilma-v1.05-Release-APK
+          name: Alharitm-Ozbekca-Terilma-v1.05-Release-APK
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
       - name: 7. Google Play Store AAB paketini yuklash
         uses: actions/upload-artifact@v4
         with:
-          name: Google-Play-Store-Ozbekca-Termilma-v1.05-AAB
+          name: Google-Play-Store-Ozbekca-Terilma-v1.05-AAB
           path: app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
       - name: 8. Play Console Mapping (Deobfuscation) faylini yuklash
