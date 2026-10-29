@@ -18,7 +18,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.7'
-      - name: 4. Android SDK 35 litsenziyalarini tasdiqlash
+      - name: 4. Android SDK 36 litsenziyalarini tasdiqlash
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
@@ -120,11 +120,11 @@ jobs:
           def runNum = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger() + 100
           android {
               namespace = 'com.alharitm.uzbekfkeyboard'
-              compileSdk = 35
+              compileSdk = 36
               defaultConfig {
                   applicationId = "com.alharitm.uzbekfkeyboard"
                   minSdk = 24
-                  targetSdk = 35
+                  targetSdk = 36
                   versionCode = runNum
                   versionName = "1.05"
               }
