@@ -1,2 +1,2 @@
 # uzbek-f-android
-Android aqilli telefonlar uchun yangi F-termasi
+Android aqilli telefonlar uchun yangi F-terilmasi
